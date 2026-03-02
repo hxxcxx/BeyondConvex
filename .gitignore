@@ -1,0 +1,53 @@
+# Build directories
+build/
+bin/
+lib/
+out/
+
+# Visual Studio
+.vs/
+*.vcxproj
+*.vcxproj.filters
+*.sln
+*.suo
+*.user
+*.vcxproj.user
+*.sln.docstates
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# Compiled files
+*.obj
+*.o
+*.lib
+*.dll
+*.so
+*.dylib
+*.exe
+*.out
+*.a
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Third-party dependencies (optional - uncomment if you want to ignore them)
+# third_party/imgui/
+# third_party/glfw/

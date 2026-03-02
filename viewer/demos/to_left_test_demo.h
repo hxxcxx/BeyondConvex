@@ -2,6 +2,7 @@
 #define VIEWER_DEMOS_TO_LEFT_TEST_DEMO_H_
 
 #include "demo_base.h"
+#include "core/point2d.h"
 #include <vector>
 
 // Forward declarations
@@ -28,7 +29,7 @@ class ToLeftTestDemo : public DemoBase {
   void RenderUI() override;
   
  private:
-  std::vector<Point> points_;
+  std::vector<Point2D> points_;
   bool test_complete_ = false;  // Flag to indicate test is complete
   
   // Helper to draw arrow

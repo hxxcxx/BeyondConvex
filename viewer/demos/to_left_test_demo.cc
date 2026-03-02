@@ -18,7 +18,7 @@ bool ToLeftTestDemo::OnMouseClicked(double x, double y) {
   }
   
   // Add new point
-  points_.push_back(Point(x, y));
+  points_.push_back(Point2D(x, y));
   
   // Mark test as complete when we have 3 points
   if (points_.size() >= 3) {
@@ -34,7 +34,7 @@ void ToLeftTestDemo::Render(float canvas_x, float canvas_y,
   
   // Draw existing points
   for (size_t i = 0; i < points_.size(); ++i) {
-    ImVec2 pos(canvas_x + points_[i].X(), canvas_y + canvas_height - points_[i].Y());
+    ImVec2 pos(canvas_x + points_[i].x, canvas_y + canvas_height - points_[i].y);
     draw_list->AddCircleFilled(pos, 8.0f, IM_COL32(100, 150, 255, 255));
     
     const char* label = (i == 0) ? "P" : (i == 1) ? "Q" : "S";
@@ -44,17 +44,23 @@ void ToLeftTestDemo::Render(float canvas_x, float canvas_y,
   
   // Draw test visualization when we have 3 points
   if (points_.size() >= 3) {
-    const Point& p = points_[0];
-    const Point& q = points_[1];
-    const Point& s = points_[2];
+    const Point2D& p = points_[0];
+    const Point2D& q = points_[1];
+    const Point2D& s = points_[2];
     
-    ImVec2 p_pos(canvas_x + p.X(), canvas_y + canvas_height - p.Y());
-    ImVec2 q_pos(canvas_x + q.X(), canvas_y + canvas_height - q.Y());
-    ImVec2 s_pos(canvas_x + s.X(), canvas_y + canvas_height - s.Y());
+    ImVec2 p_pos(canvas_x + p.x, canvas_y + canvas_height - p.y);
+    ImVec2 q_pos(canvas_x + q.x, canvas_y + canvas_height - q.y);
+    ImVec2 s_pos(canvas_x + s.x, canvas_y + canvas_height - s.y);
     
     // Test orientation using ToLeftTest
-    bool is_left = ToLeftTest(p, q, s);
-    double cross_value = CrossProduct(p, q, s);
+    bool is_left = GeometryUtils::ToLeftTest(p, q, s);
+    
+    // Calculate cross product value for display
+    double pqx = q.x - p.x;
+    double pqy = q.y - p.y;
+    double psx = s.x - p.x;
+    double psy = s.y - p.y;
+    double cross_value = pqx * psy - pqy * psx;
     
     // Draw reference line P->Q (white, dashed effect with thinner line)
     draw_list->AddLine(p_pos, q_pos, IM_COL32(255, 255, 255, 255), 3.0f);
@@ -126,11 +132,11 @@ void ToLeftTestDemo::RenderUI() {
     ImGui::TextWrapped("Test complete! Click anywhere to start a new test.");
     ImGui::Separator();
     
-    const Point& p = points_[0];
-    const Point& q = points_[1];
-    const Point& s = points_[2];
+    const Point2D& p = points_[0];
+    const Point2D& q = points_[1];
+    const Point2D& s = points_[2];
     
-    bool is_left = ToLeftTest(p, q, s);
+    bool is_left = GeometryUtils::ToLeftTest(p, q, s);
     const char* result;
     if (is_left) {
       result = "Result: S is LEFT of P->Q";
@@ -140,7 +146,12 @@ void ToLeftTestDemo::RenderUI() {
     
     ImGui::TextWrapped("%s", result);
     
-    double cross = CrossProduct(p, q, s);
+    // Calculate cross product for display
+    double pqx = q.x - p.x;
+    double pqy = q.y - p.y;
+    double psx = s.x - p.x;
+    double psy = s.y - p.y;
+    double cross = pqx * psy - pqy * psx;
     ImGui::TextWrapped("Cross Product: %.2f", cross);
   } else {
     ImGui::TextWrapped("Click to add points P, Q, S (in order).");

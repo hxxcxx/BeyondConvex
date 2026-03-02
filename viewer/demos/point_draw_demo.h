@@ -2,6 +2,7 @@
 #define VIEWER_DEMOS_POINT_DRAW_DEMO_H_
 
 #include "demo_base.h"
+#include "core/point2d.h"
 #include <vector>
 
 namespace geometry {
@@ -24,7 +25,7 @@ class PointDrawDemo : public DemoBase {
   void RenderUI() override;
   
  private:
-  std::vector<Point> points_;
+  std::vector<Point2D> points_;
 };
 
 }  // namespace geometry

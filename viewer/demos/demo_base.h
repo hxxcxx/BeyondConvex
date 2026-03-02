@@ -3,7 +3,7 @@
 
 #include <string>
 #include <vector>
-#include "core/point.h"
+#include "core/point2d.h"
 
 namespace geometry {
 

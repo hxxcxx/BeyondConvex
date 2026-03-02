@@ -47,63 +47,13 @@ target_compile_features(imgui_lib PUBLIC cxx_std_17)
 # GLFW Library
 # ============================================================================
 
-# Collect GLFW source files
-file(GLOB GLFW_SOURCES
-    glfw/src/context.c
-    glfw/src/init.c
-    glfw/src/input.c
-    glfw/src/monitor.c
-    glfw/src/vulkan.c
-    glfw/src/window.c
-    glfw/src/osmesa_context.c
-    glfw/src/egl_context.c
-)
+# Use GLFW's own CMake build system
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 
-# Platform-specific sources
-if(WIN32)
-    file(GLOB GLFW_PLATFORM_SOURCES
-        glfw/src/win32_*.c
-        glfw/src/wgl_context.c
-    )
-elseif(APPLE)
-    file(GLOB GLFW_PLATFORM_SOURCES
-        glfw/src/cocoa_*.m
-        glfw/src/nsgl_context.m
-    )
-else()
-    file(GLOB GLFW_PLATFORM_SOURCES
-        glfw/src/x11_*.c
-        glfw/src/glx_context.c
-        glfw/src/linux-*.c
-        glfw/src/posix_*.c
-    )
-endif()
+add_subdirectory(glfw)
 
-# Create GLFW library
-add_library(glfw3 STATIC ${GLFW_SOURCES} ${GLFW_PLATFORM_SOURCES})
-set_target_properties(glfw3 PROPERTIES
-    LINKER_LANGUAGE C
-)
-
-# GLFW include directories
-target_include_directories(glfw3 PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/glfw/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/glfw/src
-)
-
-# Link system libraries
-if(WIN32)
-    target_link_libraries(glfw3 PUBLIC gdi32)
-elseif(APPLE)
-    find_library(OPENGL_LIBRARY OpenGL)
-    target_link_libraries(glfw3 PUBLIC ${OPENGL_LIBRARY}
-        "-framework Cocoa"
-        "-framework IOKit"
-        "-framework CoreVideo"
-    )
-else()
-    target_link_libraries(glfw3 PUBLIC GL dl pthread m X11)
-endif()
-
-# Create alias for easier linking
-add_library(glfw ALIAS glfw3)
+# Create alias for easier linking (glfw3 -> glfw)
+add_library(glfw3 ALIAS glfw)

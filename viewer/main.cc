@@ -1,6 +1,6 @@
 #include <iostream>
 #include <memory>
-#include "core/point.h"
+#include "core/point2d.h"
 #include "core/geometry_utils.h"
 
 #include <GLFW/glfw3.h>

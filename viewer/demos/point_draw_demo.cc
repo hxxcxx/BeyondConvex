@@ -8,7 +8,7 @@ void PointDrawDemo::Reset() {
 }
 
 bool PointDrawDemo::OnMouseClicked(double x, double y) {
-  points_.push_back(Point(x, y));
+  points_.push_back(Point2D(x, y));
   return true;
 }
 
@@ -18,7 +18,7 @@ void PointDrawDemo::Render(float canvas_x, float canvas_y,
   
   // Draw all points
   for (const auto& pt : points_) {
-    ImVec2 pos(canvas_x + pt.X(), canvas_y + pt.Y());
+    ImVec2 pos(canvas_x + pt.x, canvas_y + pt.y);
     draw_list->AddCircleFilled(pos, 5.0f, IM_COL32(255, 100, 100, 255));
   }
 }

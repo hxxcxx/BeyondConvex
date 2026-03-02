@@ -9,10 +9,21 @@ file(GLOB_RECURSE viewer_headers
     "*.h"
 )
 
+# Collect demo source files
+file(GLOB_RECURSE demo_sources
+    "demos/*.cc"
+)
+
+file(GLOB_RECURSE demo_headers
+    "demos/*.h"
+)
+
 # Create viewer executable (include headers for IDE)
 add_executable(geometry_viewer 
     ${viewer_sources} 
     ${viewer_headers}
+    ${demo_sources}
+    ${demo_headers}
 )
 
 # Link with libraries

@@ -31,9 +31,11 @@ double DistanceToSegment(const Point& p, const Point& a, const Point& b);
 // Check if point is on segment
 bool IsOnSegment(const Point& p, const Point& a, const Point& b);
 
-// Orientation test
-// Returns: 1 if counter-clockwise, -1 if clockwise, 0 if collinear
-int Orientation(const Point& p, const Point& q, const Point& r);
+// To-Left Test: Check if point r is to the left of the directed line pq
+// Returns: true if r is to the left (counter-clockwise), false otherwise
+inline bool ToLeftTest(const Point& p, const Point& q, const Point& r) {
+  return CrossProduct(p, q, r) > 0;
+}
 
 }  // namespace geometry
 

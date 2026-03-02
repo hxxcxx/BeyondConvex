@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 #include "core/point.h"
 #include "core/geometry_utils.h"
 
@@ -7,58 +8,24 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
-#include <vector>
+#include "demo_manager.h"
+#include "geometry_canvas.h"
 
 using namespace geometry;
 
 // Application state
 struct AppState {
-    std::vector<Point> points;
+    DemoManager demo_manager;
+    std::unique_ptr<GeometryCanvas> canvas;
     bool show_demo_window = false;
     float clear_color[4] = {0.1f, 0.1f, 0.15f, 1.0f};
+    
+    AppState() {
+        canvas = std::make_unique<GeometryCanvas>(&demo_manager);
+        canvas->SetBackgroundColor(clear_color[0], clear_color[1], 
+                                   clear_color[2], clear_color[3]);
+    }
 };
-
-// Draw geometry on ImGui canvas
-void DrawGeometryCanvas(AppState& state) {
-    ImGui::Begin("Geometry Canvas");
-    
-    ImVec2 canvas_p0 = ImGui::GetCursorScreenPos();
-    ImVec2 canvas_sz = ImGui::GetContentRegionAvail();
-    if (canvas_sz.x < 50.0f) canvas_sz.x = 50.0f;
-    if (canvas_sz.y < 50.0f) canvas_sz.y = 50.0f;
-    ImVec2 canvas_p1 = ImVec2(canvas_p0.x + canvas_sz.x, canvas_p0.y + canvas_sz.y);
-    
-    ImDrawList* draw_list = ImGui::GetWindowDrawList();
-    draw_list->AddRectFilled(canvas_p0, canvas_p1, IM_COL32(
-        (int)(state.clear_color[0] * 255),
-        (int)(state.clear_color[1] * 255),
-        (int)(state.clear_color[2] * 255),
-        (int)(state.clear_color[3] * 255)
-    ));
-    draw_list->AddRect(canvas_p0, canvas_p1, IM_COL32(255, 255, 255, 255));
-    
-    // Handle mouse input
-    if (ImGui::IsMouseHoveringRect(canvas_p0, canvas_p1)) {
-        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-            ImVec2 mouse_pos = ImGui::GetMousePos();
-            double x = mouse_pos.x - canvas_p0.x;
-            double y = mouse_pos.y - canvas_p0.y;
-            state.points.push_back(Point(x, y));
-        }
-    }
-    
-    // Draw points
-    for (const auto& pt : state.points) {
-        ImVec2 pos(canvas_p0.x + pt.X(), canvas_p0.y + pt.Y());
-        draw_list->AddCircleFilled(pos, 5.0f, IM_COL32(255, 100, 100, 255));
-    }
-    
-    // Draw point count
-    ImGui::Text("Points: %zu", state.points.size());
-    ImGui::Text("Click on canvas to add points");
-    
-    ImGui::End();
-}
 
 int main() {
     // Initialize GLFW
@@ -106,8 +73,8 @@ int main() {
         // Main menu bar
         if (ImGui::BeginMainMenuBar()) {
             if (ImGui::BeginMenu("File")) {
-                if (ImGui::MenuItem("Clear Points")) {
-                    app_state.points.clear();
+                if (ImGui::MenuItem("Reset Demo")) {
+                    app_state.demo_manager.ResetCurrentDemo();
                 }
                 if (ImGui::MenuItem("Exit")) {
                     glfwSetWindowShouldClose(window, true);
@@ -118,6 +85,17 @@ int main() {
                 ImGui::MenuItem("Demo Window", NULL, &app_state.show_demo_window);
                 ImGui::EndMenu();
             }
+            if (ImGui::BeginMenu("Demos")) {
+                const auto& demos = app_state.demo_manager.GetDemos();
+                int current_index = app_state.demo_manager.GetCurrentDemoIndex();
+                for (size_t i = 0; i < demos.size(); ++i) {
+                    bool is_selected = (static_cast<int>(i) == current_index);
+                    if (ImGui::MenuItem(demos[i]->Name().c_str(), NULL, is_selected)) {
+                        app_state.demo_manager.SetCurrentDemo(static_cast<int>(i));
+                    }
+                }
+                ImGui::EndMenu();
+            }
             ImGui::EndMainMenuBar();
         }
         
@@ -126,8 +104,45 @@ int main() {
             ImGui::ShowDemoWindow(&app_state.show_demo_window);
         }
         
-        // Draw geometry canvas
-        DrawGeometryCanvas(app_state);
+        // Demo selection window (left side, fixed position)
+        ImGui::SetNextWindowPos(ImVec2(0, 20), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_Always);
+        ImGui::Begin("Demo Control", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+        const auto& demos = app_state.demo_manager.GetDemos();
+        int current_index = app_state.demo_manager.GetCurrentDemoIndex();
+        
+        ImGui::Text("Select Demo:");
+        for (size_t i = 0; i < demos.size(); ++i) {
+            bool is_selected = (static_cast<int>(i) == current_index);
+            if (ImGui::Selectable(demos[i]->Name().c_str(), is_selected)) {
+                app_state.demo_manager.SetCurrentDemo(static_cast<int>(i));
+            }
+        }
+        
+        ImGui::Separator();
+        if (ImGui::Button("Reset Demo")) {
+            app_state.demo_manager.ResetCurrentDemo();
+        }
+        ImGui::End();
+        
+        // Demo info window (left side, below control, fixed position)
+        ImGui::SetNextWindowPos(ImVec2(0, 320), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(300, 200), ImGuiCond_Always);
+        if (auto* demo = app_state.demo_manager.GetCurrentDemo()) {
+            ImGui::Begin("Demo Info", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+            
+            // Show description with word wrap
+            ImGui::TextWrapped("%s", demo->Description().c_str());
+            ImGui::Separator();
+            
+            // Show demo-specific UI
+            demo->RenderUI();
+            ImGui::End();
+        }
+        
+        // Draw geometry canvas (right side, full height)
+        ImGui::SetNextWindowPos(ImVec2(310, 20), ImGuiCond_FirstUseEver);
+        app_state.canvas->Render();
         
         // Rendering
         ImGui::Render();

@@ -1,5 +1,5 @@
 #include "convex_hull/convex_hull.h"
-#include "../core/geometry_utils.h"
+#include "../core/geometry_core.h"
 #include <cmath>
 
 namespace geometry {
@@ -30,7 +30,7 @@ bool ConvexHull::Contains(const Point2D& point) const {
     const Point2D& p1 = vertices_[i];
     const Point2D& p2 = vertices_[(i + 1) % vertices_.size()];
     
-    if (!GeometryUtils::ToLeftTest(p1, p2, point)) {
+    if (!internal::GeometryCore::ToLeftTest(p1, p2, point)) {
       return false;
     }
   }
@@ -54,8 +54,8 @@ bool ConvexHull::ContainsByTangent(const Point2D& point) const {
     const Point2D& succ = GetSuccessor(i);
     
     // Check if predecessor and successor are on the same side of the ray
-    bool pred_on_left = GeometryUtils::ToLeftTest(point, v, pred);
-    bool succ_on_left = GeometryUtils::ToLeftTest(point, v, succ);
+    bool pred_on_left = internal::GeometryCore::ToLeftTest(point, v, pred);
+    bool succ_on_left = internal::GeometryCore::ToLeftTest(point, v, succ);
     
     // If both are on the same side, this is a tangent
     // This means the point is outside the hull

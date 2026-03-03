@@ -1,5 +1,5 @@
 #include "convex_hull/convex_hull_builder.h"
-#include "../core/geometry_utils.h"
+#include "../core/geometry_core.h"
 #include <cmath>
 
 namespace geometry {
@@ -36,9 +36,9 @@ int ConvexHullBuilder::FindLeftmostPoint(const std::vector<Point2D>& points) {
   int leftmost_index = 0;
   
   for (size_t i = 1; i < points.size(); ++i) {
-    // Prefer smaller x, or smaller y if x values are equal
     if (points[i].x < points[leftmost_index].x ||
-        (points[i].x == points[leftmost_index].x && points[i].y < points[leftmost_index].y)) {
+        (points[i].x == points[leftmost_index].x && 
+         points[i].y < points[leftmost_index].y)) {
       leftmost_index = static_cast<int>(i);
     }
   }
@@ -50,14 +50,12 @@ int ConvexHullBuilder::FindMostCounterClockwisePoint(const std::vector<Point2D>&
   int most_ccw_index = (current_index + 1) % static_cast<int>(points.size());
   const Point2D& current_point = points[current_index];
   
-  // Check all other points to find the most counter-clockwise one
   for (size_t i = 0; i < points.size(); ++i) {
     if (static_cast<int>(i) == current_index) continue;
     
     const Point2D& candidate_point = points[i];
     const Point2D& current_best_point = points[most_ccw_index];
     
-    // Check if candidate is more counter-clockwise than current best
     if (IsMoreCounterClockwise(current_point, candidate_point, current_best_point)) {
       most_ccw_index = static_cast<int>(i);
     }
@@ -69,17 +67,14 @@ int ConvexHullBuilder::FindMostCounterClockwisePoint(const std::vector<Point2D>&
 bool ConvexHullBuilder::IsMoreCounterClockwise(const Point2D& origin, 
                                                const Point2D& candidate, 
                                                const Point2D& current_best) {
-  // Check if candidate is to the left of origin->current_best
-  if (GeometryUtils::ToLeftTest(origin, candidate, current_best)) {
+  if (internal::GeometryCore::ToLeftTest(origin, candidate, current_best)) {
     return true;
   }
   
-  // Check if points are collinear (neither is to the left of the other)
-  bool candidate_is_left = GeometryUtils::ToLeftTest(origin, candidate, current_best);
-  bool current_best_is_left = GeometryUtils::ToLeftTest(origin, current_best, candidate);
+  bool candidate_is_left = internal::GeometryCore::ToLeftTest(origin, candidate, current_best);
+  bool current_best_is_left = internal::GeometryCore::ToLeftTest(origin, current_best, candidate);
   
   if (!candidate_is_left && !current_best_is_left) {
-    // Collinear: choose the farther point
     double dist_to_candidate = (candidate - origin).LengthSquared();
     double dist_to_best = (current_best - origin).LengthSquared();
     return dist_to_candidate > dist_to_best;

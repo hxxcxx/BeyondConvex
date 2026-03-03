@@ -1,14 +1,16 @@
-#ifndef GEOMETRY_CORE_GEOMETRY_UTILS_H_
-#define GEOMETRY_CORE_GEOMETRY_UTILS_H_
+#ifndef GEOMETRY_GEOMETRY_UTILS_H_
+#define GEOMETRY_GEOMETRY_UTILS_H_
 
-#include "point2d.h"
-#include "vector2d.h"
+#include "core/point2d.h"
+#include "core/vector2d.h"
+#include "convex_hull/convex_hull.h"
 #include <vector>
 
 namespace geometry {
 
-// Basic geometric utility functions
-// This class contains fundamental geometric operations used by various algorithms
+// Public facade class for geometry operations
+// This class provides a stable API for library users
+// All implementations are delegated to internal::GeometryCore
 class GeometryUtils {
  public:
   // To-Left Test: Check if point r is to the left of the directed line pq
@@ -22,4 +24,4 @@ class GeometryUtils {
 
 }  // namespace geometry
 
-#endif  // GEOMETRY_CORE_GEOMETRY_UTILS_H_
+#endif  // GEOMETRY_GEOMETRY_UTILS_H_

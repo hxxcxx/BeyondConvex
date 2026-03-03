@@ -1,5 +1,5 @@
 #include "incremental_construction_scene.h"
-#include "core/geometry_utils.h"
+#include "core/convex_hull_factory.h"
 #include <imgui.h>
 #include <cmath>
 #include <algorithm>
@@ -37,7 +37,7 @@ void IncrementalConstructionScene::InitializePoints() {
   initialized_ = true;
   
   // Build convex hull using Jarvis March algorithm
-  hull_ = GeometryUtils::JarvisMarch(points_);
+  hull_ = ConvexHullFactory::Create(ConvexHullAlgorithm::JarvisMarch, points_);
 }
 
 bool IncrementalConstructionScene::OnMouseClicked(double x, double y) {
@@ -50,7 +50,7 @@ bool IncrementalConstructionScene::OnMouseClicked(double x, double y) {
   points_.push_back(Point2D(x, y));
   
   // Rebuild convex hull using Jarvis March algorithm
-  hull_ = GeometryUtils::JarvisMarch(points_);
+  hull_ = ConvexHullFactory::Create(ConvexHullAlgorithm::JarvisMarch, points_);
   
   return true;
 }

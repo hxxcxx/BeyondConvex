@@ -10,8 +10,7 @@ ConvexHull ConvexHullFactory::Create(ConvexHullAlgorithm algorithm,
       return ConvexHullBuilder::BuildJarvisMarch(points);
     
     case ConvexHullAlgorithm::GrahamScan:
-      // TODO: Implement GrahamScan
-      throw std::runtime_error("GrahamScan not implemented yet");
+      return ConvexHullBuilder::BuildGrahamScan(points);
     
     case ConvexHullAlgorithm::QuickHull:
       // TODO: Implement QuickHull
@@ -29,8 +28,8 @@ ConvexHull ConvexHullFactory::Create(ConvexHullAlgorithm algorithm,
 bool ConvexHullFactory::IsAlgorithmSupported(ConvexHullAlgorithm algorithm) {
   switch (algorithm) {
     case ConvexHullAlgorithm::JarvisMarch:
-      return true;
     case ConvexHullAlgorithm::GrahamScan:
+      return true;
     case ConvexHullAlgorithm::QuickHull:
     case ConvexHullAlgorithm::MonotoneChain:
       return false;  // Not implemented yet
@@ -41,7 +40,8 @@ bool ConvexHullFactory::IsAlgorithmSupported(ConvexHullAlgorithm algorithm) {
 
 std::vector<ConvexHullAlgorithm> ConvexHullFactory::GetSupportedAlgorithms() {
   return {
-    ConvexHullAlgorithm::JarvisMarch
+    ConvexHullAlgorithm::JarvisMarch,
+    ConvexHullAlgorithm::GrahamScan
     // Add more algorithms as they are implemented
   };
 }

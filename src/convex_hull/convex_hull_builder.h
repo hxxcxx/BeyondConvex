@@ -16,8 +16,12 @@ class ConvexHullBuilder {
   // Returns: ConvexHull object with vertices in counter-clockwise order
   static ConvexHull BuildJarvisMarch(const std::vector<Point2D>& points);
 
+  // Graham Scan algorithm
+  // Time complexity: O(n log n) due to sorting
+  // Returns: ConvexHull object with vertices in counter-clockwise order
+  static ConvexHull BuildGrahamScan(const std::vector<Point2D>& points);
+
   // Future algorithms can be added here
-  // static ConvexHull BuildGrahamScan(const std::vector<Point2D>& points);
   // static ConvexHull BuildQuickHull(const std::vector<Point2D>& points);
   // static ConvexHull BuildMonotoneChain(const std::vector<Point2D>& points);
 
@@ -32,6 +36,12 @@ class ConvexHullBuilder {
   static bool IsMoreCounterClockwise(const Point2D& origin, 
                                      const Point2D& candidate, 
                                      const Point2D& current_best);
+
+  // Graham Scan helpers
+  static int FindLowestPoint(const std::vector<Point2D>& points);
+  static double PolarAngle(const Point2D& origin, const Point2D& point);
+  static bool IsCollinear(const Point2D& p, const Point2D& q, const Point2D& r);
+  static double Distance(const Point2D& p, const Point2D& q);
 };
 
 }  // namespace geometry

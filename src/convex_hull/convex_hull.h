@@ -1,8 +1,8 @@
 #ifndef GEOMETRY_CORE_CONVEX_HULL_H_
 #define GEOMETRY_CORE_CONVEX_HULL_H_
 
-#include "point2d.h"
-#include "edge2d.h"
+#include "../core/point2d.h"
+#include "../core/edge2d.h"
 #include <vector>
 
 namespace geometry {

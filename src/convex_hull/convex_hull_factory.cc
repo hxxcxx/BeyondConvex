@@ -1,5 +1,5 @@
-#include "convex_hull_factory.h"
-#include "convex_hull_builder.h"
+#include "convex_hull/convex_hull_factory.h"
+#include "convex_hull/convex_hull_builder.h"
 
 namespace geometry {
 

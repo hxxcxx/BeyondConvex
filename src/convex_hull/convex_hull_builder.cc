@@ -1,5 +1,5 @@
-#include "convex_hull_builder.h"
-#include "geometry_utils.h"
+#include "convex_hull/convex_hull_builder.h"
+#include "../core/geometry_utils.h"
 #include <cmath>
 
 namespace geometry {

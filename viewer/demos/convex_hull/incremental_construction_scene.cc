@@ -1,5 +1,5 @@
 #include "incremental_construction_scene.h"
-#include "core/convex_hull_factory.h"
+#include "../../../src/convex_hull/convex_hull_factory.h"
 #include <imgui.h>
 #include <cmath>
 #include <algorithm>

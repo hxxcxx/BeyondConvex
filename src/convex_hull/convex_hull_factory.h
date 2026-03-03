@@ -1,8 +1,8 @@
 #ifndef GEOMETRY_CORE_CONVEX_HULL_FACTORY_H_
 #define GEOMETRY_CORE_CONVEX_HULL_FACTORY_H_
 
-#include "convex_hull.h"
-#include "point2d.h"
+#include "convex_hull/convex_hull.h"
+#include "../core/point2d.h"
 #include <vector>
 #include <memory>
 #include <string>

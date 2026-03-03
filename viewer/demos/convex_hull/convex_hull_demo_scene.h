@@ -2,9 +2,9 @@
 #define VIEWER_DEMOS_CONVEX_HULL_DEMO_SCENE_H_
 
 #include "../scene_base.h"
-#include "core/point2d.h"
-#include "core/convex_hull_factory.h"
-#include "core/convex_hull.h"
+#include "../../../src/core/point2d.h"
+#include "../../../src/convex_hull/convex_hull_factory.h"
+#include "../../../src/convex_hull/convex_hull.h"
 #include <vector>
 
 namespace geometry {

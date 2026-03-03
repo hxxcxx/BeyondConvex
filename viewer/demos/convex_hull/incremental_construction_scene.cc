@@ -12,7 +12,7 @@ namespace geometry {
 
 void IncrementalConstructionScene::Reset() {
   points_.clear();
-  hull_.clear();
+  hull_ = ConvexHull();
   initialized_ = false;
 }
 
@@ -72,9 +72,9 @@ void IncrementalConstructionScene::Render(float canvas_x, float canvas_y,
       
       // Check if point is on hull
       bool on_hull = false;
-      for (const auto& edge : hull_) {
-        if ((edge.p1.x == pt.x && edge.p1.y == pt.y) ||
-            (edge.p2.x == pt.x && edge.p2.y == pt.y)) {
+      const auto& hull_vertices = hull_.GetVertices();
+      for (const auto& vertex : hull_vertices) {
+        if (vertex.x == pt.x && vertex.y == pt.y) {
           on_hull = true;
           break;
         }
@@ -88,8 +88,9 @@ void IncrementalConstructionScene::Render(float canvas_x, float canvas_y,
   }
   
   // Draw convex hull edges
-  if (show_hull_edges_ && hull_.size() >= 3) {
-    for (const auto& edge : hull_) {
+  if (show_hull_edges_ && hull_.Size() >= 3) {
+    std::vector<Edge2D> edges = hull_.GetEdges();
+    for (const auto& edge : edges) {
       const Point2D& p1 = edge.p1;
       const Point2D& p2 = edge.p2;
       
@@ -121,7 +122,7 @@ void IncrementalConstructionScene::Render(float canvas_x, float canvas_y,
 
 void IncrementalConstructionScene::RenderUI() {
   ImGui::Text("Points: %zu", points_.size());
-  ImGui::Text("Hull Size: %zu", hull_.size());
+  ImGui::Text("Hull Size: %zu", hull_.Size());
   
   ImGui::Separator();
   ImGui::Checkbox("Show Hull Edges", &show_hull_edges_);
@@ -137,16 +138,9 @@ void IncrementalConstructionScene::RenderUI() {
                      "Time complexity: O(nh) where n is the number of points "
                      "and h is the number of hull points.");
   
-  if (hull_.size() >= 3) {
+  if (hull_.Size() >= 3) {
     ImGui::Separator();
-    ImGui::TextColored(ImVec4(0, 1, 0, 1), "Convex Hull Area: %.1f", 
-                       [this]() {
-                         double area = 0.0;
-                         for (const auto& edge : hull_) {
-                           area += (edge.p1.x * edge.p2.y - edge.p2.x * edge.p1.y);
-                         }
-                         return std::abs(area) / 2.0;
-                       }());
+    ImGui::TextColored(ImVec4(0, 1, 0, 1), "Convex Hull Area: %.1f", hull_.Area());
   }
 }
 

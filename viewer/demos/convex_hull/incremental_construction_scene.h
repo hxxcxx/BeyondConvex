@@ -3,7 +3,7 @@
 
 #include "../scene_base.h"
 #include "core/point2d.h"
-#include "core/edge2d.h"
+#include "core/convex_hull.h"
 #include <vector>
 
 // Forward declarations
@@ -33,7 +33,7 @@ class IncrementalConstructionScene : public GeometryScene {
   
  private:
   std::vector<Point2D> points_;
-  std::vector<Edge2D> hull_;  // Edges of the convex hull
+  ConvexHull hull_;  // Convex hull with vertices in CCW order
   bool initialized_ = false;
   bool show_hull_edges_ = true;
   bool show_all_points_ = true;

@@ -3,7 +3,7 @@
 
 #include "point2d.h"
 #include "vector2d.h"
-#include "edge2d.h"
+#include "convex_hull.h"
 #include <vector>
 
 namespace geometry {
@@ -20,22 +20,8 @@ class GeometryUtils {
 
   // Jarvis March (Gift Wrapping) algorithm for convex hull
   // Time complexity: O(nh) where n is number of points, h is number of hull points
-  // Returns: vector of edges representing the convex hull in counter-clockwise order
-  static std::vector<Edge2D> JarvisMarch(const std::vector<Point2D>& points);
-
-  // Check if a point is inside a convex hull
-  // hull: edges forming the convex hull (must be in counter-clockwise order)
-  // point: the point to test
-  // Returns: true if point is inside or on the hull
-  static bool IsPointInConvexHull(const std::vector<Edge2D>& hull, const Point2D& point);
-
-  // Check if a point is inside a convex hull using tangent method
-  // For a point inside the hull, for any hull vertex v, its predecessor and successor
-  // will always be on different sides of the ray from the point to v
-  // hull: edges forming the convex hull (must be in counter-clockwise order)
-  // point: the point to test
-  // Returns: true if point is inside or on the hull
-  static bool IsPointInConvexHullByTangent(const std::vector<Edge2D>& hull, const Point2D& point);
+  // Returns: ConvexHull object with vertices in counter-clockwise order
+  static ConvexHull JarvisMarch(const std::vector<Point2D>& points);
 };
 
 }  // namespace geometry

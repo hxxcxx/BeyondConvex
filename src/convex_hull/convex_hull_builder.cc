@@ -106,14 +106,7 @@ ConvexHull ConvexHullBuilder::BuildGrahamScan(const std::vector<Point2D>& points
   // Step 3: Sort points by polar angle with respect to pivot
   std::sort(sorted_points.begin(), sorted_points.end(),
     [&pivot](const Point2D& a, const Point2D& b) {
-      double angle_a = PolarAngle(pivot, a);
-      double angle_b = PolarAngle(pivot, b);
-      
-      if (std::abs(angle_a - angle_b) < 1e-10) {
-        // If collinear, closer point comes first
-        return Distance(pivot, a) < Distance(pivot, b);
-      }
-      return angle_a < angle_b;
+      return CompareByPolarAngle(pivot, a, b);
     });
   
   // Step 4: Build the hull using a stack
@@ -157,18 +150,34 @@ int ConvexHullBuilder::FindLowestPoint(const std::vector<Point2D>& points) {
   return lowest_index;
 }
 
-double ConvexHullBuilder::PolarAngle(const Point2D& origin, const Point2D& point) {
-  return std::atan2(point.y - origin.y, point.x - origin.x);
-}
-
-bool ConvexHullBuilder::IsCollinear(const Point2D& p, const Point2D& q, const Point2D& r) {
-  Vector2D pq = q - p;
-  Vector2D pr = r - p;
-  return std::abs(pq.Cross(pr)) < 1e-10;
-}
-
-double ConvexHullBuilder::Distance(const Point2D& p, const Point2D& q) {
-  return (q - p).Length();
+bool ConvexHullBuilder::CompareByPolarAngle(const Point2D& origin, const Point2D& a, const Point2D& b) {
+  Vector2D oa = a - origin;
+  Vector2D ob = b - origin;
+  
+  // Determine half-plane (upper: y > 0, lower: y <= 0)
+  bool a_in_upper = (oa.y > 0);
+  bool b_in_upper = (ob.y > 0);
+  
+  if (a_in_upper != b_in_upper) {
+    // Points in different half-planes
+    // Upper half-plane comes first (angles from 0 to π)
+    return a_in_upper;
+  }
+  
+  // Points in same half-plane, use cross product
+  double cross = oa.Cross(ob);
+  
+  if (std::abs(cross) > 1e-10) {
+    // Not collinear, use cross product
+    // In upper half-plane: cross > 0 means a has smaller angle
+    // In lower half-plane: cross > 0 means a has smaller angle (due to symmetry)
+    return cross > 0;
+  }
+  
+  // Collinear, closer point comes first
+  double dist_a = oa.LengthSquared();
+  double dist_b = ob.LengthSquared();
+  return dist_a < dist_b;
 }
 
 }  // namespace geometry

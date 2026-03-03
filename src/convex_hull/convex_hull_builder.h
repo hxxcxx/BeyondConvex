@@ -39,9 +39,10 @@ class ConvexHullBuilder {
 
   // Graham Scan helpers
   static int FindLowestPoint(const std::vector<Point2D>& points);
-  static double PolarAngle(const Point2D& origin, const Point2D& point);
-  static bool IsCollinear(const Point2D& p, const Point2D& q, const Point2D& r);
-  static double Distance(const Point2D& p, const Point2D& q);
+  
+  // Compare two points by polar angle with respect to origin
+  // Returns true if a comes before b in counter-clockwise order
+  static bool CompareByPolarAngle(const Point2D& origin, const Point2D& a, const Point2D& b);
 };
 
 }  // namespace geometry

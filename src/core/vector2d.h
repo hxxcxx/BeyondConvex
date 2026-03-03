@@ -41,11 +41,6 @@ class Vector2D {
     return x * other.y - y * other.x;
   }
 
-  // Cross product of vectors OA and OB (using this as origin O)
-  double Cross(const Vector2D& a, const Vector2D& b) const {
-    return (a.x - x) * (b.y - y) - (a.y - y) * (b.x - x);
-  }
-
   // Arithmetic operators
   Vector2D operator+(const Vector2D& other) const {
     return Vector2D(x + other.x, y + other.y);

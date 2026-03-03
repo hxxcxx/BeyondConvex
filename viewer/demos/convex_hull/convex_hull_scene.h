@@ -40,7 +40,12 @@ class ConvexHullScene : public GeometryScene {
   ConvexHullAlgorithm current_algorithm_;
   bool initialized_ = false;
   
+  // Cache for algorithm names (to avoid flickering)
+  std::vector<std::string> algorithm_names_cache_;
+  std::vector<ConvexHullAlgorithm> algorithms_cache_;
+  
   void RebuildHull();
+  void UpdateAlgorithmCache();
 };
 
 }  // namespace geometry

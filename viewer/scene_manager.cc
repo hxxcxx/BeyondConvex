@@ -6,6 +6,7 @@ SceneManager::SceneManager() {
   // Register all scenes here
   scenes_.push_back(std::make_unique<ToLeftTestScene>());
   scenes_.push_back(std::make_unique<IncrementalConstructionScene>());
+  scenes_.push_back(std::make_unique<ConvexHullScene>());
   
   // Set first scene as active
   if (!scenes_.empty()) {

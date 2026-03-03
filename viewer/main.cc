@@ -127,7 +127,7 @@ int main() {
         
         // Scene info window (left side, below control, fixed position)
         ImGui::SetNextWindowPos(ImVec2(0, 320), ImGuiCond_Always);
-        ImGui::SetNextWindowSize(ImVec2(300, 200), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(300, 380), ImGuiCond_Always);
         if (auto* scene = app_state.scene_manager.GetCurrentScene()) {
             ImGui::Begin("Scene Info", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
             

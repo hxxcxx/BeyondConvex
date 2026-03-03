@@ -9,6 +9,15 @@ void ConvexHullScene::Reset() {
   initialized_ = false;
 }
 
+void ConvexHullScene::UpdateAlgorithmCache() {
+  algorithms_cache_ = ConvexHullFactory::GetSupportedAlgorithms();
+  algorithm_names_cache_.clear();
+  
+  for (const auto& algo : algorithms_cache_) {
+    algorithm_names_cache_.push_back(GetAlgorithmName(algo));
+  }
+}
+
 void ConvexHullScene::RebuildHull() {
   if (points_.size() >= 3) {
     try {
@@ -56,24 +65,37 @@ void ConvexHullScene::RenderUI() {
   
   ImGui::Separator();
   
-  // Algorithm selection
-  ImGui::Text("Algorithm:");
-  if (ImGui::RadioButton("Jarvis March", 
-                        current_algorithm_ == ConvexHullAlgorithm::JarvisMarch)) {
-    SetAlgorithm(ConvexHullAlgorithm::JarvisMarch);
+  // Update algorithm cache if empty
+  if (algorithm_names_cache_.empty()) {
+    UpdateAlgorithmCache();
   }
   
-  // Future algorithms can be added here
-  // if (ImGui::RadioButton("Graham Scan", 
-  //                       current_algorithm_ == ConvexHullAlgorithm::GrahamScan)) {
-  //   SetAlgorithm(ConvexHullAlgorithm::GrahamScan);
-  // }
+  // Algorithm selection using combo box
+  ImGui::Text("Algorithm:");
+  
+  // Build pointer array for ImGui (pointing to cached strings)
+  std::vector<const char*> algorithm_name_ptrs;
+  for (const auto& name : algorithm_names_cache_) {
+    algorithm_name_ptrs.push_back(name.c_str());
+  }
+  
+  // Find current item index
+  int current_item = 0;
+  for (size_t i = 0; i < algorithms_cache_.size(); ++i) {
+    if (algorithms_cache_[i] == current_algorithm_) {
+      current_item = static_cast<int>(i);
+      break;
+    }
+  }
+  
+  if (ImGui::Combo("##Algorithm", &current_item, algorithm_name_ptrs.data(), 
+                   static_cast<int>(algorithms_cache_.size()))) {
+    SetAlgorithm(algorithms_cache_[current_item]);
+  }
   
   ImGui::Separator();
   
   // Display algorithm info
-  ImGui::Text("Name: %s", 
-              GetAlgorithmName(current_algorithm_).c_str());
   ImGui::Text("Complexity: %s", 
               GetAlgorithmComplexity(current_algorithm_).c_str());
   

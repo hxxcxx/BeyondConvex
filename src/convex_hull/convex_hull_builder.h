@@ -21,9 +21,13 @@ class ConvexHullBuilder {
   // Returns: ConvexHull object with vertices in counter-clockwise order
   static ConvexHull BuildGrahamScan(const std::vector<Point2D>& points);
 
+  // Monotone Chain algorithm
+  // Time complexity: O(n log n) due to sorting
+  // Returns: ConvexHull object with vertices in counter-clockwise order
+  static ConvexHull BuildMonotoneChain(const std::vector<Point2D>& points);
+
   // Future algorithms can be added here
   // static ConvexHull BuildQuickHull(const std::vector<Point2D>& points);
-  // static ConvexHull BuildMonotoneChain(const std::vector<Point2D>& points);
 
  private:
   // Helper: Find the leftmost point (lowest x, then lowest y if tie)

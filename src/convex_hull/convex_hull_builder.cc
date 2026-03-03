@@ -209,4 +209,72 @@ bool ConvexHullBuilder::CompareByPolarAngle(const Point2D& origin, const Point2D
   return dist_a < dist_b;
 }
 
+ConvexHull ConvexHullBuilder::BuildMonotoneChain(const std::vector<Point2D>& points) {
+  if (points.size() < 3) {
+    return ConvexHull(points);
+  }
+  
+  // Step 1: Sort points by x, then y
+  std::vector<Point2D> sorted = points;
+  std::sort(sorted.begin(), sorted.end(), [](const Point2D& a, const Point2D& b) {
+    return a.x < b.x || (a.x == b.x && a.y < b.y);
+  });
+  
+  // Step 2: Build lower hull
+  std::vector<Point2D> lower;
+  for (const auto& p : sorted) {
+    while (lower.size() >= 2) {
+      const Point2D& top = lower.back();
+      const Point2D& second_top = lower[lower.size() - 2];
+      Vector2D v1 = top - second_top;
+      Vector2D v2 = p - top;
+      double cross = v1.Cross(v2);
+      
+      // If not making a left turn (right turn or collinear), remove top
+      if (cross <= 0) {
+        lower.pop_back();
+      } else {
+        break;
+      }
+    }
+    lower.push_back(p);
+  }
+  
+  // Step 3: Build upper hull
+  std::vector<Point2D> upper;
+  for (auto it = sorted.rbegin(); it != sorted.rend(); ++it) {
+    while (upper.size() >= 2) {
+      const Point2D& top = upper.back();
+      const Point2D& second_top = upper[upper.size() - 2];
+      Vector2D v1 = top - second_top;
+      Vector2D v2 = *it - top;
+      double cross = v1.Cross(v2);
+      
+      // If not making a left turn (right turn or collinear), remove top
+      if (cross <= 0) {
+        upper.pop_back();
+      } else {
+        break;
+      }
+    }
+    upper.push_back(*it);
+  }
+  
+  // Step 4: Merge lower and upper hulls (remove duplicate endpoints)
+  std::vector<Point2D> hull_vertices;
+  
+  // Add all points from lower hull except the last one
+  for (size_t i = 0; i < lower.size() - 1; ++i) {
+    hull_vertices.push_back(lower[i]);
+  }
+  
+  // Add all points from upper hull except the first and last
+  // (first is duplicate of lower's last, last is duplicate of lower's first)
+  for (size_t i = 0; i < upper.size() - 1; ++i) {
+    hull_vertices.push_back(upper[i]);
+  }
+  
+  return ConvexHull(hull_vertices);
+}
+
 }  // namespace geometry

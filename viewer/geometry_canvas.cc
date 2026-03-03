@@ -3,8 +3,8 @@
 
 namespace geometry {
 
-GeometryCanvas::GeometryCanvas(DemoManager* manager)
-    : demo_manager_(manager) {
+GeometryCanvas::GeometryCanvas(SceneManager* manager)
+    : scene_manager_(manager) {
 }
 
 void GeometryCanvas::Render() {
@@ -55,15 +55,15 @@ void GeometryCanvas::Render() {
       double x = mouse_pos.x - canvas_p0.x;
       double y = canvas_sz.y - (mouse_pos.y - canvas_p0.y);  // Flip Y to math coordinates
       
-      if (auto* demo = demo_manager_->GetCurrentDemo()) {
-        demo->OnMouseClicked(x, y);
+      if (auto* scene = scene_manager_->GetCurrentScene()) {
+        scene->OnMouseClicked(x, y);
       }
     }
   }
   
-  // Render current demo
-  if (auto* demo = demo_manager_->GetCurrentDemo()) {
-    demo->Render(canvas_p0.x, canvas_p0.y, canvas_sz.x, canvas_sz.y);
+  // Render current scene
+  if (auto* scene = scene_manager_->GetCurrentScene()) {
+    scene->Render(canvas_p0.x, canvas_p0.y, canvas_sz.x, canvas_sz.y);
   }
   
   ImGui::End();

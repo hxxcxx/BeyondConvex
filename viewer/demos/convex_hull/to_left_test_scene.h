@@ -1,7 +1,7 @@
-#ifndef VIEWER_DEMOS_TO_LEFT_TEST_DEMO_H_
-#define VIEWER_DEMOS_TO_LEFT_TEST_DEMO_H_
+#ifndef VIEWER_DEMOS_TO_LEFT_TEST_SCENE_H_
+#define VIEWER_DEMOS_TO_LEFT_TEST_SCENE_H_
 
-#include "demo_base.h"
+#include "../scene_base.h"
 #include "core/point2d.h"
 #include <vector>
 
@@ -11,8 +11,8 @@ using ImU32 = unsigned int;
 
 namespace geometry {
 
-// To-Left Test visualization demo
-class ToLeftTestDemo : public DemoBase {
+// To-Left Test visualization scene
+class ToLeftTestScene : public GeometryScene {
  public:
   std::string Name() const override {
     return "To-Left Test";
@@ -39,4 +39,4 @@ class ToLeftTestDemo : public DemoBase {
 
 }  // namespace geometry
 
-#endif  // VIEWER_DEMOS_TO_LEFT_TEST_DEMO_H_
+#endif  // VIEWER_DEMOS_TO_LEFT_TEST_SCENE_H_

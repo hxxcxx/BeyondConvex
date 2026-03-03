@@ -8,21 +8,21 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
-#include "demo_manager.h"
+#include "scene_manager.h"
 #include "geometry_canvas.h"
 
 using namespace geometry;
 
 // Application state
 struct AppState {
-    DemoManager demo_manager;
+    SceneManager scene_manager;
     std::unique_ptr<GeometryCanvas> canvas;
     bool show_demo_window = false;
     float clear_color[4] = {0.1f, 0.1f, 0.15f, 1.0f};
     
     AppState() {
-        canvas = std::make_unique<GeometryCanvas>(&demo_manager);
-        canvas->SetBackgroundColor(clear_color[0], clear_color[1], 
+        canvas = std::make_unique<GeometryCanvas>(&scene_manager);
+        canvas->SetBackgroundColor(clear_color[0], clear_color[1],
                                    clear_color[2], clear_color[3]);
     }
 };
@@ -73,8 +73,8 @@ int main() {
         // Main menu bar
         if (ImGui::BeginMainMenuBar()) {
             if (ImGui::BeginMenu("File")) {
-                if (ImGui::MenuItem("Reset Demo")) {
-                    app_state.demo_manager.ResetCurrentDemo();
+                if (ImGui::MenuItem("Reset Scene")) {
+                    app_state.scene_manager.ResetCurrentScene();
                 }
                 if (ImGui::MenuItem("Exit")) {
                     glfwSetWindowShouldClose(window, true);
@@ -85,13 +85,13 @@ int main() {
                 ImGui::MenuItem("Demo Window", NULL, &app_state.show_demo_window);
                 ImGui::EndMenu();
             }
-            if (ImGui::BeginMenu("Demos")) {
-                const auto& demos = app_state.demo_manager.GetDemos();
-                int current_index = app_state.demo_manager.GetCurrentDemoIndex();
-                for (size_t i = 0; i < demos.size(); ++i) {
+            if (ImGui::BeginMenu("Scenes")) {
+                const auto& scenes = app_state.scene_manager.GetScenes();
+                int current_index = app_state.scene_manager.GetCurrentSceneIndex();
+                for (size_t i = 0; i < scenes.size(); ++i) {
                     bool is_selected = (static_cast<int>(i) == current_index);
-                    if (ImGui::MenuItem(demos[i]->Name().c_str(), NULL, is_selected)) {
-                        app_state.demo_manager.SetCurrentDemo(static_cast<int>(i));
+                    if (ImGui::MenuItem(scenes[i]->Name().c_str(), NULL, is_selected)) {
+                        app_state.scene_manager.SetCurrentScene(static_cast<int>(i));
                     }
                 }
                 ImGui::EndMenu();
@@ -104,39 +104,39 @@ int main() {
             ImGui::ShowDemoWindow(&app_state.show_demo_window);
         }
         
-        // Demo selection window (left side, fixed position)
+        // Scene selection window (left side, fixed position)
         ImGui::SetNextWindowPos(ImVec2(0, 20), ImGuiCond_Always);
         ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_Always);
-        ImGui::Begin("Demo Control", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
-        const auto& demos = app_state.demo_manager.GetDemos();
-        int current_index = app_state.demo_manager.GetCurrentDemoIndex();
+        ImGui::Begin("Scene Control", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+        const auto& scenes = app_state.scene_manager.GetScenes();
+        int current_index = app_state.scene_manager.GetCurrentSceneIndex();
         
-        ImGui::Text("Select Demo:");
-        for (size_t i = 0; i < demos.size(); ++i) {
+        ImGui::Text("Select Scene:");
+        for (size_t i = 0; i < scenes.size(); ++i) {
             bool is_selected = (static_cast<int>(i) == current_index);
-            if (ImGui::Selectable(demos[i]->Name().c_str(), is_selected)) {
-                app_state.demo_manager.SetCurrentDemo(static_cast<int>(i));
+            if (ImGui::Selectable(scenes[i]->Name().c_str(), is_selected)) {
+                app_state.scene_manager.SetCurrentScene(static_cast<int>(i));
             }
         }
         
         ImGui::Separator();
-        if (ImGui::Button("Reset Demo")) {
-            app_state.demo_manager.ResetCurrentDemo();
+        if (ImGui::Button("Reset Scene")) {
+            app_state.scene_manager.ResetCurrentScene();
         }
         ImGui::End();
         
-        // Demo info window (left side, below control, fixed position)
+        // Scene info window (left side, below control, fixed position)
         ImGui::SetNextWindowPos(ImVec2(0, 320), ImGuiCond_Always);
         ImGui::SetNextWindowSize(ImVec2(300, 200), ImGuiCond_Always);
-        if (auto* demo = app_state.demo_manager.GetCurrentDemo()) {
-            ImGui::Begin("Demo Info", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+        if (auto* scene = app_state.scene_manager.GetCurrentScene()) {
+            ImGui::Begin("Scene Info", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
             
             // Show description with word wrap
-            ImGui::TextWrapped("%s", demo->Description().c_str());
+            ImGui::TextWrapped("%s", scene->Description().c_str());
             ImGui::Separator();
             
-            // Show demo-specific UI
-            demo->RenderUI();
+            // Show scene-specific UI
+            scene->RenderUI();
             ImGui::End();
         }
         

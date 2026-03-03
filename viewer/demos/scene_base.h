@@ -1,5 +1,5 @@
-#ifndef VIEWER_DEMOS_DEMO_BASE_H_
-#define VIEWER_DEMOS_DEMO_BASE_H_
+#ifndef VIEWER_DEMOS_SCENE_BASE_H_
+#define VIEWER_DEMOS_SCENE_BASE_H_
 
 #include <string>
 #include <vector>
@@ -7,28 +7,28 @@
 
 namespace geometry {
 
-// Base class for all geometry demos
-class DemoBase {
+// Base class for all geometry scenes
+class GeometryScene {
  public:
-  virtual ~DemoBase() = default;
+  virtual ~GeometryScene() = default;
   
-  // Demo name for display
+  // Scene name for display
   virtual std::string Name() const = 0;
   
-  // Demo description
+  // Scene description
   virtual std::string Description() const = 0;
   
-  // Initialize demo
+  // Initialize scene
   virtual void Initialize() {}
   
-  // Reset demo state
+  // Reset scene state
   virtual void Reset() = 0;
   
   // Handle mouse click on canvas
   // Returns true if the click was handled
   virtual bool OnMouseClicked(double x, double y) = 0;
   
-  // Render the demo on the canvas
+  // Render the scene on the canvas
   // canvas_p0: top-left corner of canvas in screen coordinates
   // canvas_sz: size of canvas
   virtual void Render(float canvas_x, float canvas_y, 
@@ -37,7 +37,7 @@ class DemoBase {
   // Render UI controls (optional)
   virtual void RenderUI() {}
   
-  // Check if demo is active
+  // Check if scene is active
   bool IsActive() const { return is_active_; }
   void SetActive(bool active) { is_active_ = active; }
   
@@ -47,4 +47,4 @@ class DemoBase {
 
 }  // namespace geometry
 
-#endif  // VIEWER_DEMOS_DEMO_BASE_H_
+#endif  // VIEWER_DEMOS_SCENE_BASE_H_

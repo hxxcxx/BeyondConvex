@@ -1,16 +1,16 @@
-#include "to_left_test_demo.h"
+#include "to_left_test_scene.h"
 #include "core/geometry_utils.h"
 #include <imgui.h>
 #include <cmath>
 
 namespace geometry {
 
-void ToLeftTestDemo::Reset() {
+void ToLeftTestScene::Reset() {
   points_.clear();
   test_complete_ = false;
 }
 
-bool ToLeftTestDemo::OnMouseClicked(double x, double y) {
+bool ToLeftTestScene::OnMouseClicked(double x, double y) {
   // If test is complete (3 points), reset and start new test
   if (test_complete_) {
     points_.clear();
@@ -28,7 +28,7 @@ bool ToLeftTestDemo::OnMouseClicked(double x, double y) {
   return true;
 }
 
-void ToLeftTestDemo::Render(float canvas_x, float canvas_y, 
+void ToLeftTestScene::Render(float canvas_x, float canvas_y,
                            float canvas_width, float canvas_height) {
   ImDrawList* draw_list = ImGui::GetWindowDrawList();
   
@@ -124,7 +124,7 @@ void ToLeftTestDemo::Render(float canvas_x, float canvas_y,
   }
 }
 
-void ToLeftTestDemo::RenderUI() {
+void ToLeftTestScene::RenderUI() {
   ImGui::Text("Points: %zu / 3", points_.size());
   ImGui::Separator();
   
@@ -159,7 +159,7 @@ void ToLeftTestDemo::RenderUI() {
   }
 }
 
-void ToLeftTestDemo::DrawArrow(float x1, float y1, float x2, float y2, 
+void ToLeftTestScene::DrawArrow(float x1, float y1, float x2, float y2,
                                float arrow_size, ImU32 color) {
   ImDrawList* draw_list = ImGui::GetWindowDrawList();
   

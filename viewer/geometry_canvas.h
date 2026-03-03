@@ -1,17 +1,17 @@
 #ifndef VIEWER_GEOMETRY_CANVAS_H_
 #define VIEWER_GEOMETRY_CANVAS_H_
 
-#include "demo_manager.h"
+#include "scene_manager.h"
 #include <string>
 
 namespace geometry {
 
-// Geometry canvas for rendering demos
+// Geometry canvas for rendering scenes
 class GeometryCanvas {
  public:
-  GeometryCanvas(DemoManager* manager);
+  GeometryCanvas(SceneManager* manager);
   
-  // Render the canvas and current demo
+  // Render the canvas and current scene
   void Render();
   
   // Set canvas background color
@@ -27,7 +27,7 @@ class GeometryCanvas {
   void SetTitle(const char* title) { title_ = title; }
   
  private:
-  DemoManager* demo_manager_;
+  SceneManager* scene_manager_;
   float clear_color_[4] = {0.1f, 0.1f, 0.15f, 1.0f};
   const char* title_ = "Geometry Canvas";
 };

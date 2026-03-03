@@ -1,15 +1,15 @@
-#include "convex_hull_demo_scene.h"
+#include "convex_hull_scene.h"
 #include <imgui.h>
 
 namespace geometry {
 
-void ConvexHullDemoScene::Reset() {
+void ConvexHullScene::Reset() {
   points_.clear();
   hull_ = ConvexHull();
   initialized_ = false;
 }
 
-void ConvexHullDemoScene::RebuildHull() {
+void ConvexHullScene::RebuildHull() {
   if (points_.size() >= 3) {
     try {
       hull_ = ConvexHullFactory::Create(current_algorithm_, points_);
@@ -20,14 +20,14 @@ void ConvexHullDemoScene::RebuildHull() {
   }
 }
 
-bool ConvexHullDemoScene::OnMouseClicked(double x, double y) {
+bool ConvexHullScene::OnMouseClicked(double x, double y) {
   points_.push_back(Point2D(x, y));
   initialized_ = true;
   RebuildHull();
   return true;
 }
 
-void ConvexHullDemoScene::Render(float canvas_x, float canvas_y,
+void ConvexHullScene::Render(float canvas_x, float canvas_y,
                                  float canvas_width, float canvas_height) {
   ImDrawList* draw_list = ImGui::GetWindowDrawList();
   
@@ -50,7 +50,7 @@ void ConvexHullDemoScene::Render(float canvas_x, float canvas_y,
   }
 }
 
-void ConvexHullDemoScene::RenderUI() {
+void ConvexHullScene::RenderUI() {
   ImGui::Text("Points: %zu", points_.size());
   ImGui::Text("Hull Size: %zu", hull_.Size());
   

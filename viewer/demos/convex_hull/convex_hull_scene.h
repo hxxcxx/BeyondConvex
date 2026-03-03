@@ -1,5 +1,5 @@
-#ifndef VIEWER_DEMOS_CONVEX_HULL_DEMO_SCENE_H_
-#define VIEWER_DEMOS_CONVEX_HULL_DEMO_SCENE_H_
+#ifndef VIEWER_DEMOS_CONVEX_HULL_CONVEX_HULL_SCENE_H_
+#define VIEWER_DEMOS_CONVEX_HULL_CONVEX_HULL_SCENE_H_
 
 #include "../scene_base.h"
 #include "../../../src/core/point2d.h"
@@ -9,10 +9,10 @@
 
 namespace geometry {
 
-// Enhanced convex hull demo scene with algorithm selection
-class ConvexHullDemoScene : public GeometryScene {
+// Enhanced convex hull scene with algorithm selection
+class ConvexHullScene : public GeometryScene {
  public:
-  ConvexHullDemoScene() : current_algorithm_(ConvexHullAlgorithm::JarvisMarch) {}
+  ConvexHullScene() : current_algorithm_(ConvexHullAlgorithm::JarvisMarch) {}
   
   std::string Name() const override {
     return "Convex Hull Demo";
@@ -45,4 +45,4 @@ class ConvexHullDemoScene : public GeometryScene {
 
 }  // namespace geometry
 
-#endif  // VIEWER_DEMOS_CONVEX_HULL_DEMO_SCENE_H_
+#endif  // VIEWER_DEMOS_CONVEX_HULL_CONVEX_HULL_SCENE_H_

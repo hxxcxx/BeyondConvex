@@ -3,6 +3,7 @@
 
 #include "demos/scene_base.h"
 #include "demos/convex_hull/to_left_test_scene.h"
+#include "demos/convex_hull/incremental_construction_scene.h"
 #include <memory>
 #include <vector>
 

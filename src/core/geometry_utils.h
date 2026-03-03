@@ -28,6 +28,14 @@ class GeometryUtils {
   // point: the point to test
   // Returns: true if point is inside or on the hull
   static bool IsPointInConvexHull(const std::vector<Edge2D>& hull, const Point2D& point);
+
+  // Check if a point is inside a convex hull using tangent method
+  // For a point inside the hull, for any hull vertex v, its predecessor and successor
+  // will always be on different sides of the ray from the point to v
+  // hull: edges forming the convex hull (must be in counter-clockwise order)
+  // point: the point to test
+  // Returns: true if point is inside or on the hull
+  static bool IsPointInConvexHullByTangent(const std::vector<Edge2D>& hull, const Point2D& point);
 };
 
 }  // namespace geometry

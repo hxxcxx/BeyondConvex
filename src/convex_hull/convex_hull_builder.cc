@@ -109,6 +109,35 @@ ConvexHull ConvexHullBuilder::BuildGrahamScan(const std::vector<Point2D>& points
       return CompareByPolarAngle(pivot, a, b);
     });
   
+  // Step 3.5: Remove collinear points with pivot (keep only the farthest)
+  // After sorting, collinear points are grouped together with closer points first
+  // We only need to keep the farthest point in each collinear group
+  if (!sorted_points.empty()) {
+    size_t last_unique = 0;  // Index of last point with unique angle
+    for (size_t i = 1; i < sorted_points.size(); ++i) {
+      Vector2D v1 = sorted_points[last_unique] - pivot;
+      Vector2D v2 = sorted_points[i] - pivot;
+      double cross = v1.Cross(v2);
+      
+      if (std::abs(cross) < 1e-10) {
+        // Collinear with pivot, keep the farther one
+        double dist1 = v1.LengthSquared();
+        double dist2 = v2.LengthSquared();
+        if (dist2 > dist1) {
+          sorted_points[last_unique] = sorted_points[i];  // Replace with farther point
+        }
+        // If current point is closer, skip it (don't update last_unique)
+      } else {
+        // Different angle, keep this point
+        ++last_unique;
+        if (last_unique != i) {
+          sorted_points[last_unique] = sorted_points[i];
+        }
+      }
+    }
+    sorted_points.resize(last_unique + 1);
+  }
+  
   // Step 4: Build the hull using a stack
   std::vector<Point2D> stack;
   stack.push_back(pivot);

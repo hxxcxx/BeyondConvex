@@ -33,11 +33,11 @@ void LineSegmentIntersectionScene::GenerateRandomSegments() {
   // Random number generator
   std::random_device rd;
   std::mt19937 gen(rd());
-  std::uniform_real_distribution<> x_dist(50, 750);
-  std::uniform_real_distribution<> y_dist(50, 550);
+  std::uniform_real_distribution<> x_dist(100, 1400);
+  std::uniform_real_distribution<> y_dist(100, 850);
   
-  // Generate 10-15 random segments
-  int num_segments = 10 + (gen() % 6);
+  // Generate 12-18 random segments
+  int num_segments = 12 + (gen() % 7);
   
   for (int i = 0; i < num_segments; ++i) {
     Point2D p1(x_dist(gen), y_dist(gen));
@@ -46,6 +46,11 @@ void LineSegmentIntersectionScene::GenerateRandomSegments() {
     // Ensure segment is not too short
     while (p1.DistanceTo(p2) < 30) {
       p2 = Point2D(x_dist(gen), y_dist(gen));
+    }
+    
+    // Ensure p1 is the start point (smaller x coordinate)
+    if (p1.x > p2.x) {
+      std::swap(p1, p2);
     }
     
     segments_.emplace_back(p1, p2);
@@ -196,7 +201,13 @@ bool LineSegmentIntersectionScene::OnMouseClicked(double x, double y) {
     has_temp_point_ = true;
   } else {
     // Second click: create segment
-    segments_.emplace_back(temp_point_, clicked_point);
+    // Ensure p1 is the start point (smaller x coordinate)
+    Point2D p1 = temp_point_;
+    Point2D p2 = clicked_point;
+    if (p1.x > p2.x) {
+      std::swap(p1, p2);
+    }
+    segments_.emplace_back(p1, p2);
     has_temp_point_ = false;
     FindIntersections();
   }
@@ -253,19 +264,14 @@ void LineSegmentIntersectionScene::Render(float canvas_x, float canvas_y,
     draw_list->AddCircleFilled(ImVec2(tx, ty), 5.0f, IM_COL32(255, 200, 100, 255));
   }
   
-  // Draw all intersections as triangles
+  // Draw all intersections as small dots
   for (const auto& intersection : intersections_) {
     float ix = canvas_x + intersection.point.x;
     float iy = canvas_y + canvas_height - intersection.point.y;
     
-    // Draw intersection point as a triangle
-    float triangle_size = 10.0f;
-    ImVec2 p1(ix, iy - triangle_size);
-    ImVec2 p2(ix - triangle_size * 0.866f, iy + triangle_size * 0.5f);
-    ImVec2 p3(ix + triangle_size * 0.866f, iy + triangle_size * 0.5f);
-    
-    draw_list->AddTriangleFilled(p1, p2, p3, IM_COL32(255, 50, 50, 255));
-    draw_list->AddTriangle(p1, p2, p3, IM_COL32(255, 255, 255, 255), 2.0f);
+    // Draw intersection point as a small filled circle
+    draw_list->AddCircleFilled(ImVec2(ix, iy), 6.0f, IM_COL32(255, 50, 50, 255));
+    draw_list->AddCircle(ImVec2(ix, iy), 6.0f, IM_COL32(255, 255, 255, 255), 2.0f);
   }
   
   // Draw animation sweep line and algorithm state
@@ -288,20 +294,16 @@ void LineSegmentIntersectionScene::Render(float canvas_x, float canvas_y,
       draw_list->AddLine(ImVec2(x1, y1), ImVec2(x2, y2), IM_COL32(255, 255, 0, 255), 4.0f);
     }
     
-    // Draw newly found intersections as triangles
+    // Draw newly found intersections as pulsing dots
     for (const auto& intersection : current_event_.found_intersections) {
       float ix = canvas_x + intersection.point.x;
       float iy = canvas_y + canvas_height - intersection.point.y;
       
       // Pulsing effect
       float pulse = (std::sin(animation_progress_ * 3.14159f * 2) + 1.0f) * 0.5f;
-      float triangle_size = 10.0f + pulse * 4.0f;
+      float radius = 6.0f + pulse * 3.0f;
       
-      ImVec2 p1(ix, iy - triangle_size);
-      ImVec2 p2(ix - triangle_size * 0.866f, iy + triangle_size * 0.5f);
-      ImVec2 p3(ix + triangle_size * 0.866f, iy + triangle_size * 0.5f);
-      
-      draw_list->AddTriangleFilled(p1, p2, p3, IM_COL32(255, 100, 100, 200));
+      draw_list->AddCircleFilled(ImVec2(ix, iy), radius, IM_COL32(255, 100, 100, 200));
     }
     
     // Draw algorithm state visualization (bottom right corner)

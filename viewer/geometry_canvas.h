@@ -30,6 +30,7 @@ class GeometryCanvas {
   SceneManager* scene_manager_;
   float clear_color_[4] = {0.1f, 0.1f, 0.15f, 1.0f};
   const char* title_ = "Geometry Canvas";
+  float last_time_ = 0.0f;
 };
 
 }  // namespace geometry

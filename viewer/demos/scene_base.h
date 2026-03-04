@@ -37,6 +37,9 @@ class GeometryScene {
   // Render UI controls (optional)
   virtual void RenderUI() {}
   
+  // Update scene with delta time (optional)
+  virtual void Update(float delta_time) {}
+  
   // Check if scene is active
   bool IsActive() const { return is_active_; }
   void SetActive(bool active) { is_active_ = active; }

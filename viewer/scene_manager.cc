@@ -7,6 +7,7 @@ SceneManager::SceneManager() {
   scenes_.push_back(std::make_unique<ToLeftTestScene>());
   scenes_.push_back(std::make_unique<IncrementalConstructionScene>());
   scenes_.push_back(std::make_unique<ConvexHullScene>());
+  scenes_.push_back(std::make_unique<LineSegmentIntersectionScene>());
   
   // Set first scene as active
   if (!scenes_.empty()) {

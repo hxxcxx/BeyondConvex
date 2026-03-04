@@ -4,7 +4,7 @@
 namespace geometry {
 
 GeometryCanvas::GeometryCanvas(SceneManager* manager)
-    : scene_manager_(manager) {
+    : scene_manager_(manager), last_time_(0.0f) {
 }
 
 void GeometryCanvas::Render() {
@@ -47,6 +47,16 @@ void GeometryCanvas::Render() {
   
   // Draw canvas border
   draw_list->AddRect(canvas_p0, canvas_p1, IM_COL32(255, 255, 255, 255));
+  
+  // Calculate delta time
+  float current_time = ImGui::GetTime();
+  float delta_time = current_time - last_time_;
+  last_time_ = current_time;
+  
+  // Update current scene
+  if (auto* scene = scene_manager_->GetCurrentScene()) {
+    scene->Update(delta_time);
+  }
   
   // Handle mouse input for current demo
   if (ImGui::IsMouseHoveringRect(canvas_p0, canvas_p1)) {

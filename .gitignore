@@ -51,3 +51,4 @@ desktop.ini
 # Third-party dependencies (optional - uncomment if you want to ignore them)
 # third_party/imgui/
 # third_party/glfw/
+*.pdb

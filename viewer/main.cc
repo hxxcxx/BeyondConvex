@@ -35,7 +35,7 @@ int main() {
     }
     
     // Create window
-    GLFWwindow* window = glfwCreateWindow(1280, 720, "BeyondConvex - Geometry Viewer", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(1920, 1080, "BeyondConvex - Geometry Viewer", NULL, NULL);
     if (window == NULL) {
         std::cerr << "Failed to create GLFW window" << std::endl;
         glfwTerminate();

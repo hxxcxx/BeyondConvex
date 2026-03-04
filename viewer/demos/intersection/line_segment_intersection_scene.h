@@ -23,6 +23,10 @@ struct AnimationEvent {
   std::vector<int> active_segments;
   std::vector<IntersectionPoint> found_intersections;
   std::string description;
+  
+  // Algorithm state for visualization
+  std::vector<int> event_queue_order;  // Order of segments in event queue
+  std::vector<int> sweep_line_order;   // Order of segments in sweep line (by y)
 };
 
 class LineSegmentIntersectionScene : public GeometryScene {

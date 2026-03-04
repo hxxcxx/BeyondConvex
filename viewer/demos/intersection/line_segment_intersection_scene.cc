@@ -2,6 +2,7 @@
 #include <imgui.h>
 #include <random>
 #include <algorithm>
+#include <sstream>
 
 namespace geometry {
 
@@ -95,6 +96,31 @@ void LineSegmentIntersectionScene::FindIntersectionsWithAnimation() {
       }
     }
     event.active_segments = active_segs;
+    
+    // Sort active segments by y-coordinate at current x (sweep line order)
+    event.sweep_line_order = active_segs;
+    std::sort(event.sweep_line_order.begin(), event.sweep_line_order.end(),
+      [this, x_coords_i = x_coords[i]](int a, int b) {
+        double y_a = LineSegmentIntersection::GetYAtX(segments_[a], x_coords_i);
+        double y_b = LineSegmentIntersection::GetYAtX(segments_[b], x_coords_i);
+        return y_a < y_b;
+      });
+    
+    // Build event queue order (segments sorted by left endpoint x)
+    std::vector<int> event_queue_order;
+    for (size_t j = 0; j < segments_.size(); ++j) {
+      double left_x = std::min(segments_[j].p1.x, segments_[j].p2.x);
+      if (left_x >= x_coords[i]) {
+        event_queue_order.push_back(static_cast<int>(j));
+      }
+    }
+    std::sort(event_queue_order.begin(), event_queue_order.end(),
+      [this](int a, int b) {
+        double left_x_a = std::min(segments_[a].p1.x, segments_[a].p2.x);
+        double left_x_b = std::min(segments_[b].p1.x, segments_[b].p2.x);
+        return left_x_a < left_x_b;
+      });
+    event.event_queue_order = event_queue_order;
     
     // Check for intersections at this x position
     for (size_t j = 0; j < active_segs.size(); ++j) {
@@ -194,18 +220,30 @@ void LineSegmentIntersectionScene::Render(float canvas_x, float canvas_y,
                                          float canvas_width, float canvas_height) {
   ImDrawList* draw_list = ImGui::GetWindowDrawList();
   
-  // Draw all segments
-  for (const auto& seg : segments_) {
+  // Draw all segments with consistent color
+  for (size_t i = 0; i < segments_.size(); ++i) {
+    const Edge2D& seg = segments_[i];
     float x1 = canvas_x + seg.p1.x;
     float y1 = canvas_y + canvas_height - seg.p1.y;
     float x2 = canvas_x + seg.p2.x;
     float y2 = canvas_y + canvas_height - seg.p2.y;
     
-    draw_list->AddLine(ImVec2(x1, y1), ImVec2(x2, y2), IM_COL32(100, 150, 255, 255), 2.0f);
+    // Draw segment with consistent color (white/light gray)
+    draw_list->AddLine(ImVec2(x1, y1), ImVec2(x2, y2), IM_COL32(200, 200, 200, 255), 2.0f);
     
-    // Draw endpoints
-    draw_list->AddCircleFilled(ImVec2(x1, y1), 4.0f, IM_COL32(100, 150, 255, 255));
-    draw_list->AddCircleFilled(ImVec2(x2, y2), 4.0f, IM_COL32(100, 150, 255, 255));
+    // Draw start point number (green)
+    std::string start_label = std::to_string(i + 1);
+    const char* start_text = start_label.c_str();
+    ImVec2 start_text_size = ImGui::CalcTextSize(start_text);
+    draw_list->AddText(ImVec2(x1 - start_text_size.x / 2, y1 - 20), 
+                       IM_COL32(0, 255, 0, 255), start_text);
+    
+    // Draw end point number (red)
+    std::string end_label = std::to_string(i + 1);
+    const char* end_text = end_label.c_str();
+    ImVec2 end_text_size = ImGui::CalcTextSize(end_text);
+    draw_list->AddText(ImVec2(x2 - end_text_size.x / 2, y2 - 20), 
+                       IM_COL32(255, 0, 0, 255), end_text);
   }
   
   // Draw temporary point and line if exists
@@ -215,17 +253,22 @@ void LineSegmentIntersectionScene::Render(float canvas_x, float canvas_y,
     draw_list->AddCircleFilled(ImVec2(tx, ty), 5.0f, IM_COL32(255, 200, 100, 255));
   }
   
-  // Draw intersections
+  // Draw all intersections as triangles
   for (const auto& intersection : intersections_) {
     float ix = canvas_x + intersection.point.x;
     float iy = canvas_y + canvas_height - intersection.point.y;
     
-    // Draw intersection point as a red circle
-    draw_list->AddCircleFilled(ImVec2(ix, iy), 8.0f, IM_COL32(255, 50, 50, 255));
-    draw_list->AddCircle(ImVec2(ix, iy), 8.0f, IM_COL32(255, 255, 255, 255), 2.0f);
+    // Draw intersection point as a triangle
+    float triangle_size = 10.0f;
+    ImVec2 p1(ix, iy - triangle_size);
+    ImVec2 p2(ix - triangle_size * 0.866f, iy + triangle_size * 0.5f);
+    ImVec2 p3(ix + triangle_size * 0.866f, iy + triangle_size * 0.5f);
+    
+    draw_list->AddTriangleFilled(p1, p2, p3, IM_COL32(255, 50, 50, 255));
+    draw_list->AddTriangle(p1, p2, p3, IM_COL32(255, 255, 255, 255), 2.0f);
   }
   
-  // Draw animation sweep line (VERTICAL, left to right)
+  // Draw animation sweep line and algorithm state
   if (animation_state_ == AnimationState::Running || animation_state_ == AnimationState::Finished) {
     float sweep_x = canvas_x + current_event_.position.x;
     
@@ -245,16 +288,75 @@ void LineSegmentIntersectionScene::Render(float canvas_x, float canvas_y,
       draw_list->AddLine(ImVec2(x1, y1), ImVec2(x2, y2), IM_COL32(255, 255, 0, 255), 4.0f);
     }
     
-    // Draw newly found intersections
+    // Draw newly found intersections as triangles
     for (const auto& intersection : current_event_.found_intersections) {
       float ix = canvas_x + intersection.point.x;
       float iy = canvas_y + canvas_height - intersection.point.y;
       
       // Pulsing effect
       float pulse = (std::sin(animation_progress_ * 3.14159f * 2) + 1.0f) * 0.5f;
-      float radius = 8.0f + pulse * 4.0f;
+      float triangle_size = 10.0f + pulse * 4.0f;
       
-      draw_list->AddCircleFilled(ImVec2(ix, iy), radius, IM_COL32(255, 100, 100, 200));
+      ImVec2 p1(ix, iy - triangle_size);
+      ImVec2 p2(ix - triangle_size * 0.866f, iy + triangle_size * 0.5f);
+      ImVec2 p3(ix + triangle_size * 0.866f, iy + triangle_size * 0.5f);
+      
+      draw_list->AddTriangleFilled(p1, p2, p3, IM_COL32(255, 100, 100, 200));
+    }
+    
+    // Draw algorithm state visualization (bottom right corner)
+    float panel_x = canvas_x + canvas_width - 250;
+    float panel_y = canvas_y + canvas_height - 200;
+    
+    // Draw panel background
+    draw_list->AddRectFilled(
+      ImVec2(panel_x, panel_y),
+      ImVec2(panel_x + 240, panel_y + 190),
+      IM_COL32(30, 30, 40, 230)
+    );
+    draw_list->AddRect(
+      ImVec2(panel_x, panel_y),
+      ImVec2(panel_x + 240, panel_y + 190),
+      IM_COL32(100, 100, 100, 255), 1.5f
+    );
+    
+    // Draw title
+    draw_list->AddText(ImVec2(panel_x + 10, panel_y + 10), IM_COL32(255, 255, 0, 255), "Algorithm State");
+    
+    // Draw sweep line status
+    std::stringstream ss;
+    ss << "Sweep Line X: " << static_cast<int>(current_event_.position.x);
+    draw_list->AddText(ImVec2(panel_x + 10, panel_y + 35), IM_COL32(200, 200, 200, 255), ss.str().c_str());
+    
+    // Draw active segments in sweep line
+    draw_list->AddText(ImVec2(panel_x + 10, panel_y + 55), IM_COL32(150, 255, 150, 255), "Active Segments:");
+    float y_offset = 75;
+    for (size_t i = 0; i < current_event_.active_segments.size() && i < 5; ++i) {
+      int seg_idx = current_event_.active_segments[i];
+      std::string seg_text = "  Seg " + std::to_string(seg_idx + 1);
+      draw_list->AddText(ImVec2(panel_x + 10, panel_y + y_offset), IM_COL32(200, 200, 200, 255), seg_text.c_str());
+      y_offset += 18;
+    }
+    
+    if (current_event_.active_segments.size() > 5) {
+      draw_list->AddText(ImVec2(panel_x + 10, panel_y + y_offset), 
+                         IM_COL32(150, 150, 150, 255), 
+                         (std::string("  ... +") + std::to_string(current_event_.active_segments.size() - 5) + " more").c_str());
+    }
+    
+    // Draw found intersections
+    if (!current_event_.found_intersections.empty()) {
+      y_offset += 25;
+      draw_list->AddText(ImVec2(panel_x + 10, panel_y + y_offset), IM_COL32(255, 100, 100, 255), "New Intersections:");
+      y_offset += 20;
+      for (size_t i = 0; i < current_event_.found_intersections.size() && i < 3; ++i) {
+        const auto& inter = current_event_.found_intersections[i];
+        std::string inter_text = "  Seg " + std::to_string(inter.segment1_index + 1) + 
+                                " x Seg " + std::to_string(inter.segment2_index + 1);
+        draw_list->AddText(ImVec2(panel_x + 10, panel_y + y_offset), 
+                           IM_COL32(255, 150, 150, 255), inter_text.c_str());
+        y_offset += 18;
+      }
     }
   }
 }

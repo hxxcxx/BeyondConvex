@@ -57,10 +57,10 @@ class LineSegmentIntersection {
   static bool SegmentsIntersect(const Edge2D& seg1, const Edge2D& seg2,
                                 Point2D& intersection);
 
- private:
-  // Get the y-coordinate of a segment at a given x (for sweep line ordering)
+  // Get the y-coordinate of a segment at a given x (for visualization)
   static double GetYAtX(const Edge2D& segment, double x);
-  
+
+ private:
   // Compare two segments by their y-coordinate at the sweep line x position
   static bool CompareSegmentsAtX(const Edge2D& seg1, const Edge2D& seg2, double x);
 };

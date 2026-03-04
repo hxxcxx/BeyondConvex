@@ -63,40 +63,40 @@ void LineSegmentIntersectionScene::FindIntersectionsWithAnimation() {
     return;
   }
   
-  // Create animation events showing sweep line progress
-  // Collect all unique y-coordinates from segment endpoints
-  std::vector<double> y_coords;
+  // Create animation events showing sweep line progress (LEFT TO RIGHT)
+  // Collect all unique x-coordinates from segment endpoints
+  std::vector<double> x_coords;
   for (const auto& seg : segments_) {
-    y_coords.push_back(seg.p1.y);
-    y_coords.push_back(seg.p2.y);
+    x_coords.push_back(seg.p1.x);
+    x_coords.push_back(seg.p2.x);
   }
   
-  // Sort in descending order (from top to bottom)
-  std::sort(y_coords.begin(), y_coords.end(), std::greater<double>());
+  // Sort in ascending order (from left to right)
+  std::sort(x_coords.begin(), x_coords.end());
   
   // Remove duplicates
-  auto last = std::unique(y_coords.begin(), y_coords.end());
-  y_coords.erase(last, y_coords.end());
+  auto last = std::unique(x_coords.begin(), x_coords.end());
+  x_coords.erase(last, x_coords.end());
   
   // Generate animation events
-  for (size_t i = 0; i < y_coords.size(); ++i) {
+  for (size_t i = 0; i < x_coords.size(); ++i) {
     AnimationEvent event;
-    event.position = Point2D(400, y_coords[i]);  // Center x, current y
+    event.position = Point2D(x_coords[i], 300);  // Current x, center y
     
-    // Find segments that intersect with this horizontal line
+    // Find segments that intersect with this vertical line
     std::vector<int> active_segs;
     for (size_t j = 0; j < segments_.size(); ++j) {
       const Edge2D& seg = segments_[j];
-      double min_y = std::min(seg.p1.y, seg.p2.y);
-      double max_y = std::max(seg.p1.y, seg.p2.y);
+      double min_x = std::min(seg.p1.x, seg.p2.x);
+      double max_x = std::max(seg.p1.x, seg.p2.x);
       
-      if (y_coords[i] >= min_y && y_coords[i] <= max_y) {
+      if (x_coords[i] >= min_x && x_coords[i] <= max_x) {
         active_segs.push_back(static_cast<int>(j));
       }
     }
     event.active_segments = active_segs;
     
-    // Check for intersections at this level
+    // Check for intersections at this x position
     for (size_t j = 0; j < active_segs.size(); ++j) {
       for (size_t k = j + 1; k < active_segs.size(); ++k) {
         Point2D intersection;
@@ -122,11 +122,11 @@ void LineSegmentIntersectionScene::FindIntersectionsWithAnimation() {
     
     // Set description
     if (i == 0) {
-      event.description = "Starting sweep line";
-    } else if (i == y_coords.size() - 1) {
+      event.description = "Starting sweep line (left to right)";
+    } else if (i == x_coords.size() - 1) {
       event.description = "Sweep line complete";
     } else {
-      event.description = "Sweep line at y = " + std::to_string(static_cast<int>(y_coords[i]));
+      event.description = "Sweep line at x = " + std::to_string(static_cast<int>(x_coords[i]));
     }
     
     animation_events_.push(event);
@@ -225,13 +225,13 @@ void LineSegmentIntersectionScene::Render(float canvas_x, float canvas_y,
     draw_list->AddCircle(ImVec2(ix, iy), 8.0f, IM_COL32(255, 255, 255, 255), 2.0f);
   }
   
-  // Draw animation sweep line
+  // Draw animation sweep line (VERTICAL, left to right)
   if (animation_state_ == AnimationState::Running || animation_state_ == AnimationState::Finished) {
-    float sweep_y = canvas_y + canvas_height - current_event_.position.y;
+    float sweep_x = canvas_x + current_event_.position.x;
     
-    // Draw sweep line
-    draw_list->AddLine(ImVec2(canvas_x, sweep_y), 
-                      ImVec2(canvas_x + canvas_width, sweep_y),
+    // Draw vertical sweep line
+    draw_list->AddLine(ImVec2(sweep_x, canvas_y), 
+                      ImVec2(sweep_x, canvas_y + canvas_height),
                       IM_COL32(255, 255, 0, 150), 2.0f);
     
     // Highlight active segments

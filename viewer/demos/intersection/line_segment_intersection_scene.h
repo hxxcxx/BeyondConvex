@@ -34,7 +34,7 @@ class LineSegmentIntersectionScene : public GeometryScene {
   }
   
   std::string Description() const override {
-    return "Bentley-Ottmann sweep line algorithm. Click to add line segments.";
+    return "Bentley-Ottmann sweep line algorithm (left to right). Click to add line segments.";
   }
   
   void Reset() override;

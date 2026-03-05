@@ -23,21 +23,39 @@ struct IntersectionPoint {
   }
 };
 
+// Event type for Bentley-Ottmann algorithm
+enum class EventType {
+  LeftEndpoint,   // Segment enters sweep line
+  RightEndpoint,  // Segment leaves sweep line
+  Intersection    // Two segments intersect
+};
+
 // Event point for Bentley-Ottmann algorithm
 struct EventPoint {
   Point2D point;
-  bool is_left_endpoint;  // True if this is a left endpoint
-  int segment_index;      // Index of the segment
+  EventType type;
+  int segment_index;      // Index of the segment (for endpoint events)
+  int segment_index2;     // Index of second segment (for intersection events)
   
-  EventPoint(const Point2D& p, bool is_left, int seg_idx)
-      : point(p), is_left_endpoint(is_left), segment_index(seg_idx) {}
+  // Constructor for endpoint events
+  EventPoint(const Point2D& p, EventType t, int seg_idx)
+      : point(p), type(t), segment_index(seg_idx), segment_index2(-1) {}
   
-  // Comparator for priority queue (min-heap by y, then x)
+  // Constructor for intersection events
+  EventPoint(const Point2D& p, int seg_idx1, int seg_idx2)
+      : point(p), type(EventType::Intersection), segment_index(seg_idx1), segment_index2(seg_idx2) {}
+  
+  // Comparator for priority queue (min-heap by x, then y)
+  // Process events from left to right
   bool operator>(const EventPoint& other) const {
-    if (point.y != other.point.y) {
-      return point.y > other.point.y;  // Higher y has lower priority
+    if (point.x != other.point.x) {
+      return point.x > other.point.x;  // Larger x has lower priority (process left to right)
     }
-    return point.x > other.point.x;
+    if (point.y != other.point.y) {
+      return point.y > other.point.y;
+    }
+    // If points are equal, process in order: LeftEndpoint, Intersection, RightEndpoint
+    return static_cast<int>(type) > static_cast<int>(other.type);
   }
 };
 

@@ -14,35 +14,33 @@ std::vector<IntersectionPoint> LineSegmentIntersection::FindAllIntersections(
     return intersections;
   }
   
-  // Helper structure for sweep line ordering
-  struct SegmentInfo {
-    int index;
-    double y_at_current_x;
-    const std::vector<Edge2D>* segments_ptr;
-    
-    SegmentInfo(int idx, double y, const std::vector<Edge2D>* segs)
-        : index(idx), y_at_current_x(y), segments_ptr(segs) {}
-    
-    bool operator<(const SegmentInfo& other) const {
-      if (std::abs(y_at_current_x - other.y_at_current_x) > 1e-10) {
-        return y_at_current_x < other.y_at_current_x;
-      }
-      // If y coordinates are equal, compare by slope
-      const Edge2D& seg1 = (*segments_ptr)[index];
-      const Edge2D& seg2 = (*segments_ptr)[other.index];
-      double slope1 = (seg1.p2.y - seg1.p1.y) / (seg1.p2.x - seg1.p1.x);
-      double slope2 = (seg2.p2.y - seg2.p1.y) / (seg2.p2.x - seg2.p1.x);
-      return slope1 < slope2;
+  // Current sweep line x position (needed for ordering)
+  double sweep_x = 0.0;
+  
+  // Comparator for sweep line (orders segments by y at current sweep_x)
+  auto segment_comparator = [&sweep_x, &segments](int a, int b) {
+    double y_a = GetYAtX(segments[a], sweep_x);
+    double y_b = GetYAtX(segments[b], sweep_x);
+    if (std::abs(y_a - y_b) > 1e-10) {
+      return y_a < y_b;
     }
+    // If y coordinates are equal, compare by slope
+    const Edge2D& seg1 = segments[a];
+    const Edge2D& seg2 = segments[b];
+    double slope1 = (seg1.p2.y - seg1.p1.y) / (seg1.p2.x - seg1.p1.x);
+    double slope2 = (seg2.p2.y - seg2.p1.y) / (seg2.p2.x - seg2.p1.x);
+    return slope1 < slope2;
   };
   
-  // Step 1: Initialize event queue with all segment endpoints
+  // Sweep line: set of segment indices ordered by y at current x
+  std::set<int, decltype(segment_comparator)> sweep_line(segment_comparator);
+  
+  // Initialize event queue with all segment endpoints
   std::priority_queue<EventPoint, std::vector<EventPoint>, std::greater<EventPoint>> event_queue;
   
   for (size_t i = 0; i < segments.size(); ++i) {
     const Edge2D& seg = segments[i];
     
-    // Determine left and right endpoints (by x coordinate)
     if (seg.p1.x < seg.p2.x) {
       event_queue.emplace(seg.p1, EventType::LeftEndpoint, static_cast<int>(i));
       event_queue.emplace(seg.p2, EventType::RightEndpoint, static_cast<int>(i));
@@ -50,7 +48,7 @@ std::vector<IntersectionPoint> LineSegmentIntersection::FindAllIntersections(
       event_queue.emplace(seg.p2, EventType::LeftEndpoint, static_cast<int>(i));
       event_queue.emplace(seg.p1, EventType::RightEndpoint, static_cast<int>(i));
     } else {
-      // Vertical segment, use y coordinate
+      // Vertical segment
       if (seg.p1.y < seg.p2.y) {
         event_queue.emplace(seg.p1, EventType::LeftEndpoint, static_cast<int>(i));
         event_queue.emplace(seg.p2, EventType::RightEndpoint, static_cast<int>(i));
@@ -61,74 +59,62 @@ std::vector<IntersectionPoint> LineSegmentIntersection::FindAllIntersections(
     }
   }
   
-  // Step 2: Sweep line state (ordered by y-coordinate at current x)
-  std::set<SegmentInfo> sweep_line;
-  
-  // Track which intersections have been found to avoid duplicates
+  // Track found intersections to avoid duplicates
   std::set<std::pair<int, int>> found_intersections;
   
-  // Helper lambda to add intersection event
-  auto add_intersection_event = [&](const Point2D& intersection, int seg1, int seg2) {
-    // Only add if intersection is to the right of current sweep line
-    // and we haven't found this intersection before
-    auto pair = std::minmax(seg1, seg2);
-    if (found_intersections.find(pair) == found_intersections.end()) {
-      found_intersections.insert(pair);
-      intersections.emplace_back(intersection, seg1, seg2);
-      event_queue.emplace(intersection, seg1, seg2);
-    }
-  };
-  
-  // Step 3: Process events
+  // Process events
   while (!event_queue.empty()) {
     EventPoint event = event_queue.top();
     event_queue.pop();
     
-    double current_x = event.point.x;
+    sweep_x = event.point.x;
     
     if (event.type == EventType::LeftEndpoint) {
-      // Left endpoint: insert segment into sweep line
-      const Edge2D& seg = segments[event.segment_index];
-      double y = GetYAtX(seg, current_x);
+      // Insert segment into sweep line
+      int seg_idx = event.segment_index;
+      auto it = sweep_line.insert(seg_idx).first;
       
-      // Insert into sweep line
-      SegmentInfo new_seg(event.segment_index, y, &segments);
-      auto it = sweep_line.insert(new_seg).first;
-      
-      // Check for intersections with predecessor
+      // Check predecessor
       if (it != sweep_line.begin()) {
         auto prev = it;
         --prev;
         Point2D intersection;
-        if (SegmentsIntersect(seg, segments[prev->index], intersection)) {
-          if (intersection.x > current_x - 1e-10) {  // Intersection is to the right
-            add_intersection_event(intersection, event.segment_index, prev->index);
+        if (SegmentsIntersect(segments[seg_idx], segments[*prev], intersection)) {
+          auto pair = std::minmax(seg_idx, *prev);
+          if (found_intersections.find(pair) == found_intersections.end()) {
+            found_intersections.insert(pair);
+            intersections.emplace_back(intersection, seg_idx, *prev);
+            // Add intersection event if it's to the right
+            if (intersection.x > sweep_x + 1e-10) {
+              event_queue.emplace(intersection, seg_idx, *prev);
+            }
           }
         }
       }
       
-      // Check for intersections with successor
+      // Check successor
       auto next = it;
       ++next;
       if (next != sweep_line.end()) {
         Point2D intersection;
-        if (SegmentsIntersect(seg, segments[next->index], intersection)) {
-          if (intersection.x > current_x - 1e-10) {  // Intersection is to the right
-            add_intersection_event(intersection, event.segment_index, next->index);
+        if (SegmentsIntersect(segments[seg_idx], segments[*next], intersection)) {
+          auto pair = std::minmax(seg_idx, *next);
+          if (found_intersections.find(pair) == found_intersections.end()) {
+            found_intersections.insert(pair);
+            intersections.emplace_back(intersection, seg_idx, *next);
+            if (intersection.x > sweep_x + 1e-10) {
+              event_queue.emplace(intersection, seg_idx, *next);
+            }
           }
         }
       }
       
     } else if (event.type == EventType::RightEndpoint) {
-      // Right endpoint: remove segment from sweep line
-      const Edge2D& seg = segments[event.segment_index];
-      double y = GetYAtX(seg, current_x);
-      
-      SegmentInfo target(event.segment_index, y, &segments);
-      auto it = sweep_line.find(target);
+      // Remove segment from sweep line
+      int seg_idx = event.segment_index;
+      auto it = sweep_line.find(seg_idx);
       
       if (it != sweep_line.end()) {
-        // Get neighbors before removing
         auto prev = it;
         auto next = it;
         ++next;
@@ -139,37 +125,32 @@ std::vector<IntersectionPoint> LineSegmentIntersection::FindAllIntersections(
           prev = sweep_line.end();
         }
         
-        // Remove segment
         sweep_line.erase(it);
         
         // Check if neighbors now intersect
         if (prev != sweep_line.end() && next != sweep_line.end()) {
           Point2D intersection;
-          if (SegmentsIntersect(segments[prev->index], segments[next->index], intersection)) {
-            if (intersection.x > current_x - 1e-10) {  // Intersection is to the right
-              add_intersection_event(intersection, prev->index, next->index);
+          if (SegmentsIntersect(segments[*prev], segments[*next], intersection)) {
+            auto pair = std::minmax(*prev, *next);
+            if (found_intersections.find(pair) == found_intersections.end()) {
+              found_intersections.insert(pair);
+              intersections.emplace_back(intersection, *prev, *next);
+              if (intersection.x > sweep_x + 1e-10) {
+                event_queue.emplace(intersection, *prev, *next);
+              }
             }
           }
         }
       }
       
     } else {  // EventType::Intersection
-      // Two segments intersect: swap their positions in sweep line
+      // Two segments intersect - they will swap order in sweep line
       int seg1_idx = event.segment_index;
       int seg2_idx = event.segment_index2;
       
-      const Edge2D& seg1 = segments[seg1_idx];
-      const Edge2D& seg2 = segments[seg2_idx];
-      
-      double y1 = GetYAtX(seg1, current_x);
-      double y2 = GetYAtX(seg2, current_x);
-      
       // Find and remove both segments
-      SegmentInfo info1(seg1_idx, y1, &segments);
-      SegmentInfo info2(seg2_idx, y2, &segments);
-      
-      auto it1 = sweep_line.find(info1);
-      auto it2 = sweep_line.find(info2);
+      auto it1 = sweep_line.find(seg1_idx);
+      auto it2 = sweep_line.find(seg2_idx);
       
       if (it1 != sweep_line.end() && it2 != sweep_line.end()) {
         // Get neighbors before removing
@@ -181,67 +162,80 @@ std::vector<IntersectionPoint> LineSegmentIntersection::FindAllIntersections(
         ++next1;
         ++next2;
         
-        // Remove both segments
+        // Remove and re-insert (order will swap due to intersection)
         sweep_line.erase(it1);
         sweep_line.erase(it2);
+        sweep_line.insert(seg1_idx);
+        sweep_line.insert(seg2_idx);
         
-        // Re-insert with updated y-coordinates (swapped order)
-        SegmentInfo new_info1(seg1_idx, y1, &segments);
-        SegmentInfo new_info2(seg2_idx, y2, &segments);
-        
-        auto new_it1 = sweep_line.insert(new_info1).first;
-        auto new_it2 = sweep_line.insert(new_info2).first;
-        
-        // Check for new intersections with neighbors of seg1
-        // Check predecessor of new position
+        // Check new neighbors of seg1
+        auto new_it1 = sweep_line.find(seg1_idx);
         if (new_it1 != sweep_line.begin()) {
           auto prev = new_it1;
           --prev;
-          if (prev->index != seg2_idx) {  // Don't check with seg2
+          if (*prev != seg2_idx) {
             Point2D intersection;
-            if (SegmentsIntersect(seg1, segments[prev->index], intersection)) {
-              if (intersection.x > current_x + 1e-10) {
-                add_intersection_event(intersection, seg1_idx, prev->index);
+            if (SegmentsIntersect(segments[seg1_idx], segments[*prev], intersection)) {
+              auto pair = std::minmax(seg1_idx, *prev);
+              if (found_intersections.find(pair) == found_intersections.end()) {
+                found_intersections.insert(pair);
+                intersections.emplace_back(intersection, seg1_idx, *prev);
+                if (intersection.x > sweep_x + 1e-10) {
+                  event_queue.emplace(intersection, seg1_idx, *prev);
+                }
               }
             }
           }
         }
         
-        // Check successor of new position
         auto next = new_it1;
         ++next;
-        if (next != sweep_line.end() && next->index != seg2_idx) {
+        if (next != sweep_line.end() && *next != seg2_idx) {
           Point2D intersection;
-          if (SegmentsIntersect(seg1, segments[next->index], intersection)) {
-            if (intersection.x > current_x + 1e-10) {
-              add_intersection_event(intersection, seg1_idx, next->index);
+          if (SegmentsIntersect(segments[seg1_idx], segments[*next], intersection)) {
+            auto pair = std::minmax(seg1_idx, *next);
+            if (found_intersections.find(pair) == found_intersections.end()) {
+              found_intersections.insert(pair);
+              intersections.emplace_back(intersection, seg1_idx, *next);
+              if (intersection.x > sweep_x + 1e-10) {
+                event_queue.emplace(intersection, seg1_idx, *next);
+              }
             }
           }
         }
         
-        // Check for new intersections with neighbors of seg2
-        // Check predecessor of new position
+        // Check new neighbors of seg2
+        auto new_it2 = sweep_line.find(seg2_idx);
         if (new_it2 != sweep_line.begin()) {
           auto prev = new_it2;
           --prev;
-          if (prev->index != seg1_idx) {  // Don't check with seg1
+          if (*prev != seg1_idx) {
             Point2D intersection;
-            if (SegmentsIntersect(seg2, segments[prev->index], intersection)) {
-              if (intersection.x > current_x + 1e-10) {
-                add_intersection_event(intersection, seg2_idx, prev->index);
+            if (SegmentsIntersect(segments[seg2_idx], segments[*prev], intersection)) {
+              auto pair = std::minmax(seg2_idx, *prev);
+              if (found_intersections.find(pair) == found_intersections.end()) {
+                found_intersections.insert(pair);
+                intersections.emplace_back(intersection, seg2_idx, *prev);
+                if (intersection.x > sweep_x + 1e-10) {
+                  event_queue.emplace(intersection, seg2_idx, *prev);
+                }
               }
             }
           }
         }
         
-        // Check successor of new position
         next = new_it2;
         ++next;
-        if (next != sweep_line.end() && next->index != seg1_idx) {
+        if (next != sweep_line.end() && *next != seg1_idx) {
           Point2D intersection;
-          if (SegmentsIntersect(seg2, segments[next->index], intersection)) {
-            if (intersection.x > current_x + 1e-10) {
-              add_intersection_event(intersection, seg2_idx, next->index);
+          if (SegmentsIntersect(segments[seg2_idx], segments[*next], intersection)) {
+            auto pair = std::minmax(seg2_idx, *next);
+            if (found_intersections.find(pair) == found_intersections.end()) {
+              found_intersections.insert(pair);
+              intersections.emplace_back(intersection, seg2_idx, *next);
+              if (intersection.x > sweep_x + 1e-10) {
+                event_queue.emplace(intersection, seg2_idx, *next);
+              }
             }
           }
         }
@@ -270,34 +264,27 @@ std::vector<IntersectionPoint> LineSegmentIntersection::FindAllIntersectionsBrut
 
 bool LineSegmentIntersection::SegmentsIntersect(const Edge2D& seg1, const Edge2D& seg2,
                                                   Point2D& intersection) {
-  // Use orientation test (To-Left Test)
-  bool o1 = internal::GeometryCore::ToLeftTest(seg1.p1, seg1.p2, seg2.p1);
-  bool o2 = internal::GeometryCore::ToLeftTest(seg1.p1, seg1.p2, seg2.p2);
-  bool o3 = internal::GeometryCore::ToLeftTest(seg2.p1, seg2.p2, seg1.p1);
-  bool o4 = internal::GeometryCore::ToLeftTest(seg2.p1, seg2.p2, seg1.p2);
+  // Calculate intersection using line-line intersection
+  Vector2D v1 = seg1.Direction();
+  Vector2D v2 = seg2.Direction();
+  Vector2D v3 = seg2.p1 - seg1.p1;
   
-  // General case
-  if (o1 != o2 && o3 != o4) {
-    // Calculate intersection point using line-line intersection formula
-    // Line 1: p1 + t * (p2 - p1)
-    // Line 2: p3 + s * (p4 - p3)
-    Vector2D v1 = seg1.Direction();
-    Vector2D v2 = seg2.Direction();
-    Vector2D v3 = seg2.p1 - seg1.p1;
-    
-    double cross = v1.Cross(v2);
-    if (std::abs(cross) < 1e-10) {
-      return false;  // Parallel or collinear
-    }
-    
-    double t = v3.Cross(v2) / cross;
+  double cross = v1.Cross(v2);
+  if (std::abs(cross) < 1e-10) {
+    return false;  // Parallel
+  }
+  
+  double t = v3.Cross(v2) / cross;
+  double s = v3.Cross(v1) / cross;
+  
+  // Check if intersection is within both segments
+  const double eps = 1e-9;
+  if (t >= -eps && t <= 1.0 + eps && s >= -eps && s <= 1.0 + eps) {
     Vector2D result = seg1.p1 - Point2D(0, 0) + v1 * t;
     intersection = Point2D(result.x, result.y);
     return true;
   }
   
-  // Special cases: collinear or endpoint intersections
-  // For simplicity, we'll skip these in this implementation
   return false;
 }
 

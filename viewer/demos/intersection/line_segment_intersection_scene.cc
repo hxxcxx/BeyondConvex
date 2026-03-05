@@ -62,6 +62,7 @@ void LineSegmentIntersectionScene::GenerateRandomSegments() {
 
 void LineSegmentIntersectionScene::FindIntersectionsWithAnimation() {
   // Clear previous animation
+  intersections_ = LineSegmentIntersection::FindAllIntersections(segments_);
   animation_events_ = std::queue<AnimationEvent>();
   intersections_.clear();
   

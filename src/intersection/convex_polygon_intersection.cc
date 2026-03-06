@@ -68,8 +68,37 @@ ConvexIntersectionResult ConvexPolygonIntersection::IntersectLinearScan(
     return result;
   }
   
-  // Use Sutherland-Hodgman-like clipping
-  // Start with polygon1 and clip against each edge of polygon2
+  // First, check if one polygon is completely inside the other
+  bool v1_inside_v2 = true;
+  for (const auto& v : vertices1) {
+    if (!IsPointInConvexPolygon(v, convex2)) {
+      v1_inside_v2 = false;
+      break;
+    }
+  }
+  
+  if (v1_inside_v2) {
+    result.vertices = vertices1;
+    result.is_empty = false;
+    return result;
+  }
+  
+  bool v2_inside_v1 = true;
+  for (const auto& v : vertices2) {
+    if (!IsPointInConvexPolygon(v, convex1)) {
+      v2_inside_v1 = false;
+      break;
+    }
+  }
+  
+  if (v2_inside_v1) {
+    result.vertices = vertices2;
+    result.is_empty = false;
+    return result;
+  }
+  
+  // Use Sutherland-Hodgman clipping algorithm
+  // Clip polygon1 against each edge of polygon2
   std::vector<Point2D> current_polygon = vertices1;
   
   for (size_t i = 0; i < vertices2.size() && !current_polygon.empty(); ++i) {
@@ -100,23 +129,60 @@ ConvexIntersectionResult ConvexPolygonIntersection::IntersectLinearScan(
     return result;
   }
   
-  // Remove collinear points and ensure CCW order
+  // Remove duplicate and collinear points
   std::vector<Point2D> cleaned;
   for (size_t i = 0; i < current_polygon.size(); ++i) {
-    size_t prev = (i + current_polygon.size() - 1) % current_polygon.size();
-    size_t next = (i + 1) % current_polygon.size();
+    // Check for duplicate
+    bool is_duplicate = false;
+    for (const auto& pt : cleaned) {
+      if ((pt - current_polygon[i]).Length() < 1e-8) {
+        is_duplicate = true;
+        break;
+      }
+    }
     
-    Vector2D v1 = current_polygon[i] - current_polygon[prev];
-    Vector2D v2 = current_polygon[next] - current_polygon[i];
+    if (is_duplicate) continue;
     
+    // Check for collinearity (only if we have at least 2 points)
+    if (cleaned.size() >= 2) {
+      size_t n = cleaned.size();
+      Vector2D v1 = cleaned[n-1] - cleaned[n-2];
+      Vector2D v2 = current_polygon[i] - cleaned[n-1];
+      double cross = v1.Cross(v2);
+      if (std::abs(cross) < 1e-10) {
+        // Collinear, replace the last point
+        cleaned[n-1] = current_polygon[i];
+        continue;
+      }
+    }
+    
+    cleaned.push_back(current_polygon[i]);
+  }
+  
+  // Final check for collinearity with wrap-around
+  if (cleaned.size() >= 3) {
+    size_t n = cleaned.size();
+    Vector2D v1 = cleaned[0] - cleaned[n-1];
+    Vector2D v2 = cleaned[1] - cleaned[0];
     double cross = v1.Cross(v2);
-    if (std::abs(cross) > 1e-10) {
-      cleaned.push_back(current_polygon[i]);
+    if (std::abs(cross) < 1e-10) {
+      // First point is collinear, remove it
+      cleaned.erase(cleaned.begin());
     }
   }
   
   if (cleaned.size() < 3) {
-    result.is_empty = true;
+    if (cleaned.empty()) {
+      result.is_empty = true;
+    } else if (cleaned.size() == 1) {
+      result.is_point = true;
+      result.is_empty = false;
+      result.vertices = cleaned;
+    } else {
+      result.is_segment = true;
+      result.is_empty = false;
+      result.vertices = cleaned;
+    }
     return result;
   }
   
@@ -140,24 +206,35 @@ ConvexIntersectionResult ConvexPolygonIntersection::IntersectBinarySearch(
   }
   
   // Check if one polygon is completely inside the other
-  bool v1_in_v2 = IsPointInConvexPolygon(vertices1[0], convex2);
-  bool v2_in_v1 = IsPointInConvexPolygon(vertices2[0], convex1);
+  bool v1_inside_v2 = true;
+  for (const auto& v : vertices1) {
+    if (!IsPointInConvexPolygon(v, convex2)) {
+      v1_inside_v2 = false;
+      break;
+    }
+  }
   
-  if (v1_in_v2) {
-    // Polygon 1 is inside polygon 2
+  if (v1_inside_v2) {
     result.vertices = vertices1;
     result.is_empty = false;
     return result;
   }
   
-  if (v2_in_v1) {
-    // Polygon 2 is inside polygon 1
+  bool v2_inside_v1 = true;
+  for (const auto& v : vertices2) {
+    if (!IsPointInConvexPolygon(v, convex1)) {
+      v2_inside_v1 = false;
+      break;
+    }
+  }
+  
+  if (v2_inside_v1) {
     result.vertices = vertices2;
     result.is_empty = false;
     return result;
   }
   
-  // Find intersection points using binary search
+  // Find intersection points
   std::vector<Point2D> intersection_points;
   
   // Check each edge of polygon1 against polygon2
@@ -208,7 +285,7 @@ ConvexIntersectionResult ConvexPolygonIntersection::IntersectBinarySearch(
     return result;
   }
   
-  // Sort points by angle around centroid
+  // Sort points by angle around centroid to get CCW order
   Point2D centroid(0, 0);
   for (const auto& pt : intersection_points) {
     centroid.x += pt.x;
@@ -234,17 +311,15 @@ bool ConvexPolygonIntersection::IsPointInConvexPolygon(
   
   const auto& vertices = convex.GetVertices();
   if (vertices.empty()) return false;
+  if (vertices.size() < 3) return false;
   
-  // Use binary search for O(log n) query
   size_t n = vertices.size();
   
-  // Check if point is on same side of all edges
-  bool first_sign = IsOnLeft(point, vertices[0], vertices[1]);
-  
-  for (size_t i = 1; i < n; ++i) {
+  // For a CCW convex polygon, a point is inside if it's on the left of all edges
+  // (or on the edge)
+  for (size_t i = 0; i < n; ++i) {
     size_t next = (i + 1) % n;
-    bool current_sign = IsOnLeft(point, vertices[i], vertices[next]);
-    if (current_sign != first_sign) {
+    if (!IsOnLeft(point, vertices[i], vertices[next])) {
       return false;
     }
   }
@@ -363,7 +438,7 @@ std::vector<Point2D> ConvexPolygonIntersection::ClipConvexPolygon(
     bool next_inside = IsOnLeft(next, clip_p1, clip_p2);
     
     if (current_inside && next_inside) {
-      // Both inside, keep next
+      // Both inside, keep next (current was already added in previous iteration)
       result.push_back(next);
     } else if (current_inside && !next_inside) {
       // Current inside, next outside, add intersection

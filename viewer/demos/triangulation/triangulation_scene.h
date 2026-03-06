@@ -17,8 +17,7 @@ class TriangulationScene : public GeometryScene {
   }
   
   std::string Description() const override {
-    return "Triangulate polygons using different algorithms. "
-           "Click to add points, press SPACE to complete polygon and triangulate.";
+    return "Triangulate polygons using different algorithms.";
   }
   
   void Initialize() override;
@@ -40,8 +39,6 @@ class TriangulationScene : public GeometryScene {
   void DrawTriangle(const Triangle& tri, float r, float g, float b, float alpha);
   void DrawLine(const Point2D& p1, const Point2D& p2, float width, float r, float g, float b);
   void DrawPoint(const Point2D& p, float size, float r, float g, float b);
-  void DrawText(const std::string& text, float x, float y, float size, float r, float g, float b);
-  void DrawSweepLine(double y);
   
   // Polygon vertices
   std::vector<Point2D> polygon_points_;
@@ -53,28 +50,15 @@ class TriangulationScene : public GeometryScene {
   int selected_algorithm_;
   std::vector<TriangulationAlgorithm> algorithms_;
   
-  // Animation state
-  enum class AnimationState {
-    kIdle,
-    kDrawingPolygon,
-    kTriangulating,
-    kShowingResult,
-    kComplete
-  };
-  AnimationState animation_state_;
-  float animation_timer_;
-  float sweep_line_y_;  // Current sweep line position
-  
   // Canvas parameters
   float canvas_x_, canvas_y_, canvas_width_, canvas_height_;
-  
+
   // Visualization parameters
   float polygon_color_[3];
   float triangle_colors_[3][3];  // Colors for different triangles
-  int current_color_index_;
-  
-  // Show sweep line animation
-  bool show_sweep_line_;
+
+  // Show triangulation result
+  bool show_triangulation_;
 };
 
 }  // namespace geometry

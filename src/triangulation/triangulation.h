@@ -103,9 +103,6 @@ class Triangulation {
   // Helper: Calculate signed area
   static double SignedArea(const std::vector<Point2D>& polygon);
   
-  // Helper: Check if three points make a left turn
-  static bool IsLeftTurn(const Point2D& a, const Point2D& b, const Point2D& c);
-  
   // Helper: Check if diagonal is valid (inside polygon)
   static bool IsValidDiagonal(
       const std::vector<Point2D>& polygon,

@@ -10,17 +10,19 @@ namespace geometry {
 // Triangle methods
 bool Triangle::Contains(const Point2D& p) const {
   // Use barycentric coordinates or check if point is on same side of all edges
-  auto same_side = [](const Point2D& p1, const Point2D& p2, 
+  auto same_side = [](const Point2D& p1, const Point2D& p2,
                       const Point2D& a, const Point2D& b) {
     Vector2D v1 = b - a;
     Vector2D v2 = p1 - a;
     Vector2D v3 = p2 - a;
     double cross1 = v1.Cross(v2);
     double cross2 = v1.Cross(v3);
-    return (cross1 >= -1e-10 && cross2 >= -1e-10) || 
-           (cross1 <= 1e-10 && cross2 <= 1e-10);
+    const double eps = 1e-9;
+    // Both points should be on the same side (including boundary)
+    return (cross1 > -eps && cross2 > -eps) ||
+           (cross1 < eps && cross2 < eps);
   };
-  
+
   return same_side(p, v0, v1, v2) &&
          same_side(p, v1, v0, v2) &&
          same_side(p, v2, v0, v1);
@@ -80,82 +82,141 @@ TriangulationResult Triangulation::Triangulate(
 }
 
 TriangulationResult Triangulation::SweepLineTriangulation(
-    const std::vector<Point2D>& polygon) {
-  
-  TriangulationResult result;
-  
-  if (polygon.size() < 3) {
-    return result;
-  }
-  
-  // Make a copy and ensure CCW order
-  std::vector<Point2D> vertices = polygon;
-  if (!IsCCW(vertices)) {
-    std::reverse(vertices.begin(), vertices.end());
-  }
-  
-  // Sort vertices by y-coordinate (top to bottom)
-  std::vector<size_t> vertex_order(vertices.size());
-  for (size_t i = 0; i < vertices.size(); ++i) {
-    vertex_order[i] = i;
-  }
-  
-  std::sort(vertex_order.begin(), vertex_order.end(),
-      [&vertices](size_t i, size_t j) {
-        if (std::abs(vertices[i].y - vertices[j].y) > 1e-10) {
-          return vertices[i].y > vertices[j].y;  // Higher y first (top to bottom)
-        }
-        return vertices[i].x < vertices[j].x;  // Tie-breaker: left to right
-      });
-  
-  // Track which vertices have been processed
-  std::set<size_t> processed_vertices;
-  
-  // Track edges in the current triangulation
-  std::set<std::pair<size_t, size_t>> triangulation_edges;
-  
-  // Add polygon edges
-  for (size_t i = 0; i < vertices.size(); ++i) {
-    size_t next = (i + 1) % vertices.size();
-    size_t v1 = std::min(i, next);
-    size_t v2 = std::max(i, next);
-    triangulation_edges.insert({v1, v2});
-    result.edges.push_back(Edge2D(vertices[i], vertices[next]));
-  }
-  
-  // Process vertices from top to bottom
-  for (size_t idx : vertex_order) {
-    processed_vertices.insert(idx);
-    
-    // Find adjacent vertices in polygon
-    size_t prev = (idx + vertices.size() - 1) % vertices.size();
-    size_t next = (idx + 1) % vertices.size();
-    
-    // Check if we can form triangles with this vertex
-    // Try to connect to visible vertices
-    for (size_t other : processed_vertices) {
-      if (other == idx || other == prev || other == next) continue;
-      
-      // Check if diagonal is valid
-      if (IsValidDiagonal(vertices, idx, other)) {
-        size_t v1 = std::min(idx, other);
-        size_t v2 = std::max(idx, other);
-        
-        // Check if edge already exists
-        if (triangulation_edges.find({v1, v2}) == triangulation_edges.end()) {
-          // Add new triangle
-          // Find the third vertex that forms a triangle with idx and other
-          // This is a simplified approach - for proper sweep line, we need more sophisticated logic
-        }
-      }
-    }
-  }
-  
-  // For now, use ear clipping as fallback
-  // A proper sweep line triangulation is more complex
-  return EarClippingTriangulation(vertices);
-}
+    const std::vector<Point2D>& polygon)
+{
+    TriangulationResult result;
 
+    if (polygon.size() < 3)
+        return result;
+
+    std::vector<Point2D> vertices = polygon;
+
+    if (!IsCCW(vertices))
+        std::reverse(vertices.begin(), vertices.end());
+
+    size_t n = vertices.size();
+
+    // Step1: sort by y (top to bottom)
+    std::vector<size_t> order(n);
+    for (size_t i = 0; i < n; ++i)
+        order[i] = i;
+
+    std::sort(order.begin(), order.end(),
+        [&](size_t a, size_t b)
+        {
+            if (fabs(vertices[a].y - vertices[b].y) > 1e-10)
+                return vertices[a].y > vertices[b].y;
+            return vertices[a].x < vertices[b].x;
+        });
+
+    size_t top = order.front();
+    size_t bottom = order.back();
+
+    // Step2: build chains - mark vertices on left chain
+    std::vector<char> isLeftChain(n, 0);
+
+    size_t v = top;
+    while (v != bottom)
+    {
+        isLeftChain[v] = 1;
+        v = (v + 1) % n;
+    }
+
+    // Step3: triangulate using stack
+    std::vector<size_t> stack;
+    stack.push_back(order[0]);
+    stack.push_back(order[1]);
+
+    for (size_t i = 2; i < n - 1; ++i)
+    {
+        size_t curr = order[i];
+
+        // Check if current vertex and stack top are on different chains
+        if (isLeftChain[curr] != isLeftChain[stack.back()])
+        {
+            // Different chains: pop all and form triangles
+            size_t v_prev = stack.back();
+            stack.pop_back();
+
+            while (!stack.empty())
+            {
+                size_t v_top = stack.back();
+                stack.pop_back();
+
+                // Triangle: (curr, v_prev, v_top)
+                result.triangles.emplace_back(
+                    vertices[curr], vertices[v_prev], vertices[v_top]);
+
+                v_prev = v_top;
+            }
+
+            stack.push_back(order[i - 1]);
+            stack.push_back(curr);
+        }
+        else
+        {
+            // Same chain: pop while diagonal is valid
+            size_t v_last = stack.back();
+            stack.pop_back();
+
+            while (!stack.empty())
+            {
+                size_t v_top = stack.back();
+
+                // Check if (v_last, curr, v_top) is a valid diagonal
+                Vector2D v1 = vertices[curr] - vertices[v_last];
+                Vector2D v2 = vertices[v_top] - vertices[v_last];
+                double cross = v1.Cross(v2);
+
+                bool is_convex = false;
+                if (isLeftChain[curr])
+                {
+                    // On left chain, need cross < 0 (right turn)
+                    is_convex = (cross < -1e-10);
+                }
+                else
+                {
+                    // On right chain, need cross > 0 (left turn)
+                    is_convex = (cross > 1e-10);
+                }
+
+                if (is_convex)
+                {
+                    // Triangle: (curr, v_last, v_top)
+                    result.triangles.emplace_back(
+                        vertices[curr], vertices[v_last], vertices[v_top]);
+
+                    v_last = v_top;
+                    stack.pop_back();
+                }
+                else
+                    break;
+            }
+
+            stack.push_back(v_last);
+            stack.push_back(curr);
+        }
+    }
+
+    // Step4: connect remaining vertices to bottom
+    size_t bottom_idx = order.back();
+    size_t v_prev = stack.back();
+    stack.pop_back();
+
+    while (!stack.empty())
+    {
+        size_t v_top = stack.back();
+        stack.pop_back();
+
+        // Triangle: (bottom, v_prev, v_top)
+        result.triangles.emplace_back(
+            vertices[bottom_idx], vertices[v_prev], vertices[v_top]);
+
+        v_prev = v_top;
+    }
+
+    return result;
+}
 TriangulationResult Triangulation::EarClippingTriangulation(
     const std::vector<Point2D>& polygon) {
   
@@ -195,7 +256,10 @@ TriangulationResult Triangulation::EarClippingTriangulation(
       const Point2D& p_next = polygon_points[in];
       
       // Check if (prev, curr, next) forms an ear (convex and no points inside)
-      if (IsLeftTurn(p_prev, p_curr, p_next)) {
+      // Use ToLeftTest for strict left turn check (cross > 0)
+      Vector2D v1 = p_curr - p_prev;
+      Vector2D v2 = p_next - p_curr;
+      if (internal::GeometryCore::ToLeftTest(v1, v2)) {
         bool is_ear = true;
         
         // Check if any other vertex is inside this triangle
@@ -346,12 +410,6 @@ double Triangulation::SignedArea(const std::vector<Point2D>& polygon) {
   return area / 2.0;
 }
 
-bool Triangulation::IsLeftTurn(const Point2D& a, const Point2D& b, const Point2D& c) {
-  Vector2D v1 = b - a;
-  Vector2D v2 = c - a;
-  return v1.Cross(v2) > 0;
-}
-
 bool Triangulation::IsValidDiagonal(
     const std::vector<Point2D>& polygon, size_t i, size_t j) {
   
@@ -378,8 +436,16 @@ bool Triangulation::IsDiagonalInside(
   size_t next_i = (i + 1) % n;
   
   // Diagonal must be strictly inside the polygon at vertex i
-  if (!IsLeftTurn(polygon[prev_i], polygon[i], polygon[j]) &&
-      !IsLeftTurn(polygon[i], polygon[next_i], polygon[j])) {
+  // Use ToLeftTest for strict left turn check (cross > 0)
+  Vector2D v1 = polygon[i] - polygon[prev_i];
+  Vector2D v2 = polygon[j] - polygon[prev_i];
+  bool left1 = internal::GeometryCore::ToLeftTest(v1, v2);
+  
+  Vector2D v3 = polygon[next_i] - polygon[i];
+  Vector2D v4 = polygon[j] - polygon[i];
+  bool left2 = internal::GeometryCore::ToLeftTest(v3, v4);
+  
+  if (!left1 && !left2) {
     return false;
   }
   

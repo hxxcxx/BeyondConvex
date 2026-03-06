@@ -68,6 +68,7 @@ class ConvexPolygonIntersectionScene : public GeometryScene {
   };
   AnimationState animation_state_;
   float animation_timer_;
+  float pulse_phase_;  // For pulsing effect on intersection
   
   // Canvas parameters (set during Render)
   float canvas_x_, canvas_y_, canvas_width_, canvas_height_;

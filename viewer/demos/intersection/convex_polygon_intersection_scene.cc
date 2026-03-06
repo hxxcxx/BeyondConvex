@@ -2,6 +2,7 @@
 #include <random>
 #include <sstream>
 #include <iomanip>
+#include <cmath>
 #include <imgui.h>
 
 namespace geometry {
@@ -10,6 +11,7 @@ ConvexPolygonIntersectionScene::ConvexPolygonIntersectionScene()
     : selected_algorithm_(0),
       animation_state_(AnimationState::kIdle),
       animation_timer_(0.0f),
+      pulse_phase_(0.0f),
       canvas_x_(0), canvas_y_(0), canvas_width_(1920), canvas_height_(1080) {
   
   // Initialize colors
@@ -21,9 +23,9 @@ ConvexPolygonIntersectionScene::ConvexPolygonIntersectionScene()
   convex2_color_[1] = 0.5f;  // G
   convex2_color_[2] = 0.3f;  // B (Light orange)
   
-  intersection_color_[0] = 0.4f;  // R
-  intersection_color_[1] = 0.9f;  // G
-  intersection_color_[2] = 0.4f;  // B (Light green)
+  intersection_color_[0] = 0.2f;  // R
+  intersection_color_[1] = 0.95f; // G (Brighter green)
+  intersection_color_[2] = 0.3f;  // B
   
   // Get supported algorithms
   algorithms_ = ConvexPolygonIntersection::GetSupportedAlgorithms();
@@ -45,6 +47,9 @@ bool ConvexPolygonIntersectionScene::OnMouseClicked(double x, double y) {
 
 void ConvexPolygonIntersectionScene::Update(float delta_time) {
   animation_timer_ += delta_time;
+  
+  // Update pulse phase for intersection highlight effect
+  pulse_phase_ += delta_time * 3.0f;  // 3 radians per second
   
   switch (animation_state_) {
     case AnimationState::kIdle:
@@ -151,29 +156,58 @@ void ConvexPolygonIntersectionScene::Render(
   // Draw intersection result
   if (animation_state_ >= AnimationState::kShowingResult && !intersection_result_.is_empty) {
     if (!intersection_result_.vertices.empty()) {
-      // Draw filled intersection
-      DrawFilledPolygon(intersection_result_.vertices, 
-                       intersection_color_[0], intersection_color_[1], 
-                       intersection_color_[2], 0.5f);
+      // Calculate pulse effect for highlighting
+      float pulse = (std::sin(pulse_phase_) + 1.0f) * 0.5f;  // 0 to 1
+      float pulse_alpha = 0.75f + pulse * 0.15f;  // 0.75 to 0.9
+      float pulse_brightness = 1.0f + pulse * 0.2f;  // 1.0 to 1.2
       
-      // Draw edges with thicker lines
+      // Draw filled intersection with pulsing opacity
+      DrawFilledPolygon(intersection_result_.vertices, 
+                       intersection_color_[0] * pulse_brightness, 
+                       intersection_color_[1] * pulse_brightness, 
+                       intersection_color_[2] * pulse_brightness, 
+                       pulse_alpha);
+      
+      // Draw edges with even thicker lines and pulsing bright color
       for (size_t i = 0; i < intersection_result_.vertices.size(); ++i) {
         size_t next = (i + 1) % intersection_result_.vertices.size();
+        // Draw outer glow effect (thicker, more transparent)
+        DrawLine(intersection_result_.vertices[i], 
+                intersection_result_.vertices[next], 6.0f,
+                intersection_color_[0] * 0.6f, 
+                intersection_color_[1] * pulse_brightness, 
+                intersection_color_[2] * 0.6f);
+        // Draw inner bright line with pulse
         DrawLine(intersection_result_.vertices[i], 
                 intersection_result_.vertices[next], 3.0f,
-                intersection_color_[0], intersection_color_[1], intersection_color_[2]);
+                1.0f * pulse_brightness, 
+                1.0f * pulse_brightness, 
+                0.3f * pulse_brightness);
       }
       
-      // Draw vertices
+      // Draw vertices with larger size and pulsing bright color
       for (const auto& v : intersection_result_.vertices) {
-        DrawPoint(v, 8.0f, intersection_color_[0], intersection_color_[1], intersection_color_[2]);
+        // Outer glow with pulse
+        float glow_size = 12.0f + pulse * 3.0f;  // 12 to 15
+        DrawPoint(v, glow_size, 
+                 intersection_color_[0] * 0.5f, 
+                 intersection_color_[1] * 0.5f * pulse_brightness, 
+                 intersection_color_[2] * 0.5f);
+        // Inner bright point with pulse
+        DrawPoint(v, 8.0f + pulse * 2.0f,  // 8 to 10
+                 1.0f * pulse_brightness, 
+                 1.0f * pulse_brightness, 
+                 0.3f * pulse_brightness);
       }
       
-      // Draw label
+      // Draw label with bright color and pulse
       if (!intersection_result_.vertices.empty()) {
-        DrawText("Intersection", intersection_result_.vertices[0].x + 10,
-                intersection_result_.vertices[0].y - 20, 14.0f,
-                intersection_color_[0], intersection_color_[1], intersection_color_[2]);
+        float text_size = 16.0f + pulse * 2.0f;  // 16 to 18
+        DrawText(">> INTERSECTION <<", intersection_result_.vertices[0].x + 15,
+                intersection_result_.vertices[0].y - 25, text_size,
+                1.0f * pulse_brightness, 
+                1.0f * pulse_brightness, 
+                0.3f * pulse_brightness);
       }
     }
   }

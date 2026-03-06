@@ -1,6 +1,11 @@
 #include "triangulation_scene.h"
 #include <random>
+#include <cmath>
 #include <imgui.h>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 namespace geometry {
 
@@ -51,22 +56,18 @@ void TriangulationScene::Render(
 
   ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
-  // Draw polygon
+  // Draw polygon edges (simply connect vertices in order)
   if (!polygon_points_.empty()) {
-    // Draw filled polygon
-    DrawFilledPolygon(polygon_points_, polygon_color_[0], polygon_color_[1],
-                     polygon_color_[2], 0.3f);
-
-    // Draw edges
+    // Draw edges by connecting vertices in order
     for (size_t i = 0; i < polygon_points_.size(); ++i) {
       size_t next = (i + 1) % polygon_points_.size();
-      DrawLine(polygon_points_[i], polygon_points_[next], 2.0f,
+      DrawLine(polygon_points_[i], polygon_points_[next], 3.0f,
               polygon_color_[0], polygon_color_[1], polygon_color_[2]);
     }
 
     // Draw vertices
     for (const auto& v : polygon_points_) {
-      DrawPoint(v, 6.0f, polygon_color_[0], polygon_color_[1], polygon_color_[2]);
+      DrawPoint(v, 8.0f, polygon_color_[0], polygon_color_[1], polygon_color_[2]);
     }
   }
 
@@ -145,33 +146,38 @@ void TriangulationScene::RenderUI() {
 void TriangulationScene::GenerateRandomPolygon() {
   std::random_device rd;
   std::mt19937 gen(rd());
-  
+
   polygon_points_.clear();
-  
-  // Generate random points
-  std::uniform_real_distribution<double> x_dist(200, 1400);
-  std::uniform_real_distribution<double> y_dist(200, 700);
-  
-  int num_points = 5 + std::uniform_int_distribution<>(2, 4)(gen);
+
+  // Center and radius
+  double center_x = 800;
+  double center_y = 450;
+  double radius = 300;
+
+  // Number of vertices
+  int num_points = 5 + std::uniform_int_distribution<>(2, 5)(gen);
+
+  // Generate random angles
+  std::vector<double> angles;
+  std::uniform_real_distribution<double> angle_dist(0, 2.0 * M_PI);
   for (int i = 0; i < num_points; ++i) {
-    polygon_points_.push_back(Point2D(x_dist(gen), y_dist(gen)));
+    angles.push_back(angle_dist(gen));
   }
-  
-  // Sort by angle to create a simple polygon
-  Point2D centroid(0, 0);
-  for (const auto& p : polygon_points_) {
-    centroid.x += p.x;
-    centroid.y += p.y;
+
+  // Sort angles to ensure CCW order (guarantees simple polygon)
+  std::sort(angles.begin(), angles.end());
+
+  // Generate points with random radius variation
+  std::uniform_real_distribution<double> radius_dist(0.6, 1.0);
+  for (int i = 0; i < num_points; ++i) {
+    double r = radius * radius_dist(gen);
+    double x = center_x + r * std::cos(angles[i]);
+    double y = center_y + r * std::sin(angles[i]);
+    polygon_points_.push_back(Point2D(x, y));
   }
-  centroid.x /= polygon_points_.size();
-  centroid.y /= polygon_points_.size();
-  
-  std::sort(polygon_points_.begin(), polygon_points_.end(),
-      [&centroid](const Point2D& a, const Point2D& b) {
-        double angle_a = std::atan2(a.y - centroid.y, a.x - centroid.x);
-        double angle_b = std::atan2(b.y - centroid.y, b.x - centroid.x);
-        return angle_a < angle_b;
-      });
+
+  // Don't create concave vertices for now - keep it simple
+  // The random radius variation is enough to create interesting shapes
 }
 
 void TriangulationScene::ComputeTriangulation() {

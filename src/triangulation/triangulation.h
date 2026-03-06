@@ -117,6 +117,12 @@ class Triangulation {
   static bool DiagonalIntersectsEdges(
       const std::vector<Point2D>& polygon,
       size_t i, size_t j);
+
+  // Helper: Check if two vertices are adjacent in polygon
+  static bool AreAdjacentInPolygon(
+      size_t i,
+      size_t j,
+      const std::vector<Point2D>& polygon);
 };
 
 }  // namespace geometry

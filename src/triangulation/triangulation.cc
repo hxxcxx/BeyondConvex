@@ -143,9 +143,18 @@ TriangulationResult Triangulation::SweepLineTriangulation(
                 size_t v_top = stack.back();
                 stack.pop_back();
 
-                // Triangle: (curr, v_prev, v_top)
-                result.triangles.emplace_back(
-                    vertices[curr], vertices[v_prev], vertices[v_top]);
+                // Check if all edges are valid (polygon edges or valid diagonals)
+                bool edge1_valid = AreAdjacentInPolygon(curr, v_prev, vertices) ||
+                                  IsValidDiagonal(vertices, curr, v_prev);
+                bool edge2_valid = AreAdjacentInPolygon(v_prev, v_top, vertices) ||
+                                  IsValidDiagonal(vertices, v_prev, v_top);
+                bool edge3_valid = AreAdjacentInPolygon(v_top, curr, vertices) ||
+                                  IsValidDiagonal(vertices, v_top, curr);
+
+                if (edge1_valid && edge2_valid && edge3_valid) {
+                    result.triangles.emplace_back(
+                        vertices[curr], vertices[v_prev], vertices[v_top]);
+                }
 
                 v_prev = v_top;
             }
@@ -182,9 +191,18 @@ TriangulationResult Triangulation::SweepLineTriangulation(
 
                 if (is_convex)
                 {
-                    // Triangle: (curr, v_last, v_top)
-                    result.triangles.emplace_back(
-                        vertices[curr], vertices[v_last], vertices[v_top]);
+                    // Check if all edges are valid
+                    bool edge1_valid = AreAdjacentInPolygon(curr, v_last, vertices) ||
+                                      IsValidDiagonal(vertices, curr, v_last);
+                    bool edge2_valid = AreAdjacentInPolygon(v_last, v_top, vertices) ||
+                                      IsValidDiagonal(vertices, v_last, v_top);
+                    bool edge3_valid = AreAdjacentInPolygon(v_top, curr, vertices) ||
+                                      IsValidDiagonal(vertices, v_top, curr);
+
+                    if (edge1_valid && edge2_valid && edge3_valid) {
+                        result.triangles.emplace_back(
+                            vertices[curr], vertices[v_last], vertices[v_top]);
+                    }
 
                     v_last = v_top;
                     stack.pop_back();
@@ -208,9 +226,18 @@ TriangulationResult Triangulation::SweepLineTriangulation(
         size_t v_top = stack.back();
         stack.pop_back();
 
-        // Triangle: (bottom, v_prev, v_top)
-        result.triangles.emplace_back(
-            vertices[bottom_idx], vertices[v_prev], vertices[v_top]);
+        // Check if all edges are valid
+        bool edge1_valid = AreAdjacentInPolygon(bottom_idx, v_prev, vertices) ||
+                          IsValidDiagonal(vertices, bottom_idx, v_prev);
+        bool edge2_valid = AreAdjacentInPolygon(v_prev, v_top, vertices) ||
+                          IsValidDiagonal(vertices, v_prev, v_top);
+        bool edge3_valid = AreAdjacentInPolygon(v_top, bottom_idx, vertices) ||
+                          IsValidDiagonal(vertices, v_top, bottom_idx);
+
+        if (edge1_valid && edge2_valid && edge3_valid) {
+            result.triangles.emplace_back(
+                vertices[bottom_idx], vertices[v_prev], vertices[v_top]);
+        }
 
         v_prev = v_top;
     }
@@ -483,6 +510,20 @@ bool Triangulation::DiagonalIntersectsEdges(
   }
   
   return false;
+}
+
+bool Triangulation::AreAdjacentInPolygon(
+    size_t i,
+    size_t j,
+    const std::vector<Point2D>& polygon) {
+
+  size_t n = polygon.size();
+
+  // Check if i and j are adjacent in the polygon
+  size_t next_i = (i + 1) % n;
+  size_t prev_i = (i + n - 1) % n;
+
+  return (j == next_i || j == prev_i);
 }
 
 }  // namespace geometry

@@ -319,8 +319,21 @@ bool ConvexPolygonIntersection::IsPointInConvexPolygon(
   // (or on the edge)
   for (size_t i = 0; i < n; ++i) {
     size_t next = (i + 1) % n;
-    if (!IsOnLeft(point, vertices[i], vertices[next])) {
-      return false;
+    
+    // Use ToLeftTest for strict left check
+    bool is_strictly_left = internal::GeometryCore::ToLeftTest(vertices[i], vertices[next], point);
+    
+    if (!is_strictly_left) {
+      // Not strictly on left, check if it's on the edge (collinear)
+      Vector2D edge = vertices[next] - vertices[i];
+      Vector2D to_point = point - vertices[i];
+      double cross = edge.Cross(to_point);
+      
+      // If on the right side (not on left or on edge), return false
+      if (cross < -1e-10) {
+        return false;
+      }
+      // Otherwise on the edge (cross ≈ 0), continue checking
     }
   }
   
@@ -354,18 +367,6 @@ std::string ConvexPolygonIntersection::GetAlgorithmComplexity(ConvexIntersection
     default:
       return "Unknown";
   }
-}
-
-bool ConvexPolygonIntersection::IsOnLeft(const Point2D& p, const Point2D& p1, const Point2D& p2) {
-  Vector2D v1 = p2 - p1;
-  Vector2D v2 = p - p1;
-  return v1.Cross(v2) >= 0;
-}
-
-bool ConvexPolygonIntersection::IsOnRight(const Point2D& p, const Point2D& p1, const Point2D& p2) {
-  Vector2D v1 = p2 - p1;
-  Vector2D v2 = p - p1;
-  return v1.Cross(v2) <= 0;
 }
 
 bool ConvexPolygonIntersection::SegmentIntersection(
@@ -410,7 +411,12 @@ size_t ConvexPolygonIntersection::FindTangentPoint(
     size_t mid = (left + right) / 2;
     size_t next = (mid + 1) % n;
     
-    if (IsOnLeft(vertices[mid], external_point, vertices[next])) {
+    // Check if external_point is on the left of the edge vertices[mid]->vertices[next]
+    Vector2D edge = vertices[next] - vertices[mid];
+    Vector2D to_external = external_point - vertices[mid];
+    double cross = edge.Cross(to_external);
+    
+    if (cross > 0) {
       right = mid;
     } else {
       left = mid + 1;
@@ -434,8 +440,15 @@ std::vector<Point2D> ConvexPolygonIntersection::ClipConvexPolygon(
     const Point2D& current = polygon[i];
     const Point2D& next = polygon[next_i];
     
-    bool current_inside = IsOnLeft(current, clip_p1, clip_p2);
-    bool next_inside = IsOnLeft(next, clip_p1, clip_p2);
+    // Check if points are on the left side of clip edge (including on the edge)
+    Vector2D clip_edge = clip_p2 - clip_p1;
+    Vector2D to_current = current - clip_p1;
+    Vector2D to_next = next - clip_p1;
+    double cross_current = clip_edge.Cross(to_current);
+    double cross_next = clip_edge.Cross(to_next);
+    
+    bool current_inside = cross_current >= -1e-10;
+    bool next_inside = cross_next >= -1e-10;
     
     if (current_inside && next_inside) {
       // Both inside, keep next (current was already added in previous iteration)

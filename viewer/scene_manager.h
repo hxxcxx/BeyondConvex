@@ -7,6 +7,7 @@
 #include "demos/convex_hull/convex_hull_scene.h"
 #include "demos/intersection/line_segment_intersection_scene.h"
 #include "demos/intersection/convex_polygon_intersection_scene.h"
+#include "demos/triangulation/triangulation_scene.h"
 #include <memory>
 #include <vector>
 

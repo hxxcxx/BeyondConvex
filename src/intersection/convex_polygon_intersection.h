@@ -65,12 +65,6 @@ class ConvexPolygonIntersection {
   static std::string GetAlgorithmComplexity(ConvexIntersectionAlgorithm algorithm);
   
  private:
-  // Helper: Check if point is on left side of directed line (p1 -> p2)
-  static bool IsOnLeft(const Point2D& p, const Point2D& p1, const Point2D& p2);
-  
-  // Helper: Check if point is on right side of directed line (p1 -> p2)
-  static bool IsOnRight(const Point2D& p, const Point2D& p1, const Point2D& p2);
-  
   // Helper: Find intersection point of two line segments
   static bool SegmentIntersection(const Point2D& p1, const Point2D& p2,
                                    const Point2D& q1, const Point2D& q2,

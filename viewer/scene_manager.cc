@@ -8,6 +8,7 @@ SceneManager::SceneManager() {
   scenes_.push_back(std::make_unique<IncrementalConstructionScene>());
   scenes_.push_back(std::make_unique<ConvexHullScene>());
   scenes_.push_back(std::make_unique<LineSegmentIntersectionScene>());
+  scenes_.push_back(std::make_unique<ConvexPolygonIntersectionScene>());
   
   // Set first scene as active
   if (!scenes_.empty()) {

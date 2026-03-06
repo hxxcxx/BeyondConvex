@@ -143,17 +143,15 @@ TriangulationResult Triangulation::SweepLineTriangulation(
                 size_t v_top = stack.back();
                 stack.pop_back();
 
-                // Check if all edges are valid (polygon edges or valid diagonals)
-                bool edge1_valid = AreAdjacentInPolygon(curr, v_prev, vertices) ||
-                                  IsValidDiagonal(vertices, curr, v_prev);
-                bool edge2_valid = AreAdjacentInPolygon(v_prev, v_top, vertices) ||
-                                  IsValidDiagonal(vertices, v_prev, v_top);
-                bool edge3_valid = AreAdjacentInPolygon(v_top, curr, vertices) ||
-                                  IsValidDiagonal(vertices, v_top, curr);
-
-                if (edge1_valid && edge2_valid && edge3_valid) {
+                // Form triangle with correct orientation
+                // For CCW polygon: (curr, v_top, v_prev) if curr is on right chain
+                //                  (curr, v_prev, v_top) if curr is on left chain
+                if (isLeftChain[curr]) {
                     result.triangles.emplace_back(
                         vertices[curr], vertices[v_prev], vertices[v_top]);
+                } else {
+                    result.triangles.emplace_back(
+                        vertices[curr], vertices[v_top], vertices[v_prev]);
                 }
 
                 v_prev = v_top;
@@ -172,7 +170,7 @@ TriangulationResult Triangulation::SweepLineTriangulation(
             {
                 size_t v_top = stack.back();
 
-                // Check if (v_last, curr, v_top) is a valid diagonal
+                // Check if (v_last, curr, v_top) forms a valid diagonal
                 Vector2D v1 = vertices[curr] - vertices[v_last];
                 Vector2D v2 = vertices[v_top] - vertices[v_last];
                 double cross = v1.Cross(v2);
@@ -191,17 +189,13 @@ TriangulationResult Triangulation::SweepLineTriangulation(
 
                 if (is_convex)
                 {
-                    // Check if all edges are valid
-                    bool edge1_valid = AreAdjacentInPolygon(curr, v_last, vertices) ||
-                                      IsValidDiagonal(vertices, curr, v_last);
-                    bool edge2_valid = AreAdjacentInPolygon(v_last, v_top, vertices) ||
-                                      IsValidDiagonal(vertices, v_last, v_top);
-                    bool edge3_valid = AreAdjacentInPolygon(v_top, curr, vertices) ||
-                                      IsValidDiagonal(vertices, v_top, curr);
-
-                    if (edge1_valid && edge2_valid && edge3_valid) {
+                    // Form triangle with correct orientation
+                    if (isLeftChain[curr]) {
                         result.triangles.emplace_back(
                             vertices[curr], vertices[v_last], vertices[v_top]);
+                    } else {
+                        result.triangles.emplace_back(
+                            vertices[curr], vertices[v_top], vertices[v_last]);
                     }
 
                     v_last = v_top;
@@ -226,17 +220,13 @@ TriangulationResult Triangulation::SweepLineTriangulation(
         size_t v_top = stack.back();
         stack.pop_back();
 
-        // Check if all edges are valid
-        bool edge1_valid = AreAdjacentInPolygon(bottom_idx, v_prev, vertices) ||
-                          IsValidDiagonal(vertices, bottom_idx, v_prev);
-        bool edge2_valid = AreAdjacentInPolygon(v_prev, v_top, vertices) ||
-                          IsValidDiagonal(vertices, v_prev, v_top);
-        bool edge3_valid = AreAdjacentInPolygon(v_top, bottom_idx, vertices) ||
-                          IsValidDiagonal(vertices, v_top, bottom_idx);
-
-        if (edge1_valid && edge2_valid && edge3_valid) {
+        // Form triangle with correct orientation
+        if (isLeftChain[bottom_idx]) {
             result.triangles.emplace_back(
                 vertices[bottom_idx], vertices[v_prev], vertices[v_top]);
+        } else {
+            result.triangles.emplace_back(
+                vertices[bottom_idx], vertices[v_top], vertices[v_prev]);
         }
 
         v_prev = v_top;

@@ -123,6 +123,32 @@ class Triangulation {
       size_t i,
       size_t j,
       const std::vector<Point2D>& polygon);
+  
+  // Helper: Calculate cross product (b-a) x (c-a)
+  static double Cross(const Point2D& a, const Point2D& b, const Point2D& c);
+  
+  // Helper: Check if point is inside triangle (including boundary)
+  static bool PointInTriangle(
+      const Point2D& p,
+      const Point2D& a,
+      const Point2D& b,
+      const Point2D& c);
+  
+  // Helper: Check if point is strictly inside triangle (excluding boundary)
+  static bool PointStrictlyInTriangle(
+      const Point2D& p,
+      const Point2D& a,
+      const Point2D& b,
+      const Point2D& c);
+  
+  // Helper: Check if three points form a convex corner (CCW turn)
+  static bool IsConvex(
+      const Point2D& prev,
+      const Point2D& curr,
+      const Point2D& next);
+  
+  // Helper: Remove collinear vertices from polygon
+  static void RemoveCollinear(std::vector<Point2D>& poly);
 };
 
 }  // namespace geometry

@@ -234,104 +234,109 @@ TriangulationResult Triangulation::SweepLineTriangulation(
 
     return result;
 }
+
 TriangulationResult Triangulation::EarClippingTriangulation(
-    const std::vector<Point2D>& polygon) {
-  
-  TriangulationResult result;
-  
-  if (polygon.size() < 3) {
-    return result;
-  }
-  
-  // Make a copy and ensure CCW order
-  std::vector<size_t> vertices;
-  for (size_t i = 0; i < polygon.size(); ++i) {
-    vertices.push_back(i);
-  }
-  
-  // Check if CCW, if not reverse
-  std::vector<Point2D> polygon_points = polygon;
-  if (!IsCCW(polygon_points)) {
-    std::reverse(polygon_points.begin(), polygon_points.end());
-  }
-  
-  // Ear clipping algorithm
-  while (vertices.size() > 3) {
-    bool ear_found = false;
-    
-    for (size_t i = 0; i < vertices.size(); ++i) {
-      size_t prev = (i + vertices.size() - 1) % vertices.size();
-      size_t curr = i;
-      size_t next = (i + 1) % vertices.size();
-      
-      size_t ip = vertices[prev];
-      size_t ic = vertices[curr];
-      size_t in = vertices[next];
-      
-      const Point2D& p_prev = polygon_points[ip];
-      const Point2D& p_curr = polygon_points[ic];
-      const Point2D& p_next = polygon_points[in];
-      
-      // Check if (prev, curr, next) forms an ear (convex and no points inside)
-      // Use ToLeftTest for strict left turn check (cross > 0)
-      Vector2D v1 = p_curr - p_prev;
-      Vector2D v2 = p_next - p_curr;
-      if (internal::GeometryCore::ToLeftTest(v1, v2)) {
-        bool is_ear = true;
-        
-        // Check if any other vertex is inside this triangle
-        Triangle ear(p_prev, p_curr, p_next);
-        for (size_t j = 0; j < vertices.size(); ++j) {
-          size_t vj = vertices[j];
-          if (vj == ip || vj == ic || vj == in) continue;
-          
-          if (ear.Contains(polygon_points[vj])) {
-            is_ear = false;
+    const std::vector<Point2D>& polygon)
+{
+    TriangulationResult result;
+
+    if (polygon.size() < 3)
+        return result;
+
+    std::vector<Point2D> poly = polygon;
+
+    if (!IsCCW(poly))
+        std::reverse(poly.begin(), poly.end());
+
+    RemoveCollinear(poly);
+
+    size_t n = poly.size();
+
+    std::vector<size_t> vertices(n);
+
+    for (size_t i = 0; i < n; i++)
+        vertices[i] = i;
+
+    int guard = 0;
+
+    while (vertices.size() > 3 && guard < 10000)
+    {
+        bool ear_found = false;
+
+        for (size_t i = 0; i < vertices.size(); i++)
+        {
+            size_t prev_i = (i + vertices.size() - 1) % vertices.size();
+            size_t next_i = (i + 1) % vertices.size();
+
+            size_t ip = vertices[prev_i];
+            size_t ic = vertices[i];
+            size_t in = vertices[next_i];
+
+            const Point2D& p_prev = poly[ip];
+            const Point2D& p_curr = poly[ic];
+            const Point2D& p_next = poly[in];
+
+            if (!IsConvex(p_prev, p_curr, p_next))
+                continue;
+
+            bool contains = false;
+
+            for (size_t v : vertices)
+            {
+                if (v == ip || v == ic || v == in)
+                    continue;
+
+                if (PointStrictlyInTriangle(
+                        poly[v],
+                        p_prev,
+                        p_curr,
+                        p_next))
+                {
+                    contains = true;
+                    break;
+                }
+            }
+
+            if (contains)
+                continue;
+
+            result.triangles.emplace_back(
+                p_prev,
+                p_curr,
+                p_next);
+
+            result.edges.emplace_back(p_prev, p_curr);
+            result.edges.emplace_back(p_curr, p_next);
+            result.edges.emplace_back(p_next, p_prev);
+
+            vertices.erase(vertices.begin() + i);
+
+            ear_found = true;
             break;
-          }
         }
-        
-        if (is_ear) {
-          // Clip this ear
-          result.triangles.push_back(ear);
-          result.vertices.push_back(p_prev);
-          result.vertices.push_back(p_curr);
-          result.vertices.push_back(p_next);
-          result.edges.push_back(Edge2D(p_prev, p_curr));
-          result.edges.push_back(Edge2D(p_curr, p_next));
-          result.edges.push_back(Edge2D(p_next, p_prev));
-          
-          // Remove current vertex from polygon
-          vertices.erase(vertices.begin() + curr);
-          
-          ear_found = true;
-          break;
+
+        if (!ear_found)
+        {
+            break;
         }
-      }
+
+        guard++;
     }
-    
-    if (!ear_found) {
-      // No ear found, polygon might be self-intersecting
-      break;
+
+    if (vertices.size() == 3)
+    {
+        const Point2D& a = poly[vertices[0]];
+        const Point2D& b = poly[vertices[1]];
+        const Point2D& c = poly[vertices[2]];
+
+        result.triangles.emplace_back(a, b, c);
+
+        result.edges.emplace_back(a, b);
+        result.edges.emplace_back(b, c);
+        result.edges.emplace_back(c, a);
     }
-  }
-  
-  // Add the final triangle
-  if (vertices.size() == 3) {
-    const Point2D& p0 = polygon_points[vertices[0]];
-    const Point2D& p1 = polygon_points[vertices[1]];
-    const Point2D& p2 = polygon_points[vertices[2]];
-    
-    result.triangles.push_back(Triangle(p0, p1, p2));
-    result.vertices.push_back(p0);
-    result.vertices.push_back(p1);
-    result.vertices.push_back(p2);
-    result.edges.push_back(Edge2D(p0, p1));
-    result.edges.push_back(Edge2D(p1, p2));
-    result.edges.push_back(Edge2D(p2, p0));
-  }
-  
-  return result;
+
+    return result;
 }
 
 TriangulationResult Triangulation::DelaunayTriangulation(
@@ -412,7 +417,16 @@ bool Triangulation::IsSimplePolygon(const std::vector<Point2D>& polygon) {
 }
 
 bool Triangulation::IsCCW(const std::vector<Point2D>& polygon) {
-  return SignedArea(polygon) > 0;
+  double area = 0;
+
+  for (size_t i = 0; i < polygon.size(); ++i) {
+    const Point2D& p1 = polygon[i];
+    const Point2D& p2 = polygon[(i + 1) % polygon.size()];
+
+    area += (p2.x - p1.x) * (p2.y + p1.y);
+  }
+
+  return area < 0;
 }
 
 double Triangulation::SignedArea(const std::vector<Point2D>& polygon) {
@@ -514,6 +528,72 @@ bool Triangulation::AreAdjacentInPolygon(
   size_t prev_i = (i + n - 1) % n;
 
   return (j == next_i || j == prev_i);
+}
+
+// Helper: Calculate cross product (b-a) x (c-a)
+double Triangulation::Cross(const Point2D& a, const Point2D& b, const Point2D& c) {
+  return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+}
+
+// Helper: Check if point is inside triangle (including boundary)
+bool Triangulation::PointInTriangle(
+    const Point2D& p,
+    const Point2D& a,
+    const Point2D& b,
+    const Point2D& c) {
+  
+  double d1 = Cross(p, a, b);
+  double d2 = Cross(p, b, c);
+  double d3 = Cross(p, c, a);
+
+  bool has_neg = (d1 < 0) || (d2 < 0) || (d3 < 0);
+  bool has_pos = (d1 > 0) || (d2 > 0) || (d3 > 0);
+
+  return !(has_neg && has_pos);
+}
+
+// Helper: Check if point is strictly inside triangle (excluding boundary)
+bool Triangulation::PointStrictlyInTriangle(
+    const Point2D& p,
+    const Point2D& a,
+    const Point2D& b,
+    const Point2D& c) {
+  
+  double d1 = Cross(p, a, b);
+  double d2 = Cross(p, b, c);
+  double d3 = Cross(p, c, a);
+
+  return (d1 > 0 && d2 > 0 && d3 > 0);
+}
+
+// Helper: Check if three points form a convex corner (CCW turn)
+bool Triangulation::IsConvex(
+    const Point2D& prev,
+    const Point2D& curr,
+    const Point2D& next) {
+  
+  return Cross(prev, curr, next) > 0;
+}
+
+// Helper: Remove collinear vertices from polygon
+void Triangulation::RemoveCollinear(std::vector<Point2D>& poly) {
+  if (poly.size() < 3) {
+    return;
+  }
+
+  std::vector<Point2D> result;
+
+  for (size_t i = 0; i < poly.size(); ++i) {
+    const Point2D& prev = poly[(i + poly.size() - 1) % poly.size()];
+    const Point2D& curr = poly[i];
+    const Point2D& next = poly[(i + 1) % poly.size()];
+
+    if (std::abs(Cross(prev, curr, next)) > 1e-12) {
+      result.push_back(curr);
+    }
+  }
+
+  poly.swap(result);
 }
 
 }  // namespace geometry

@@ -1,4 +1,5 @@
 #include "scene_manager.h"
+#include "demos/voronoi/voronoi_scene.h"
 
 namespace geometry {
 
@@ -10,6 +11,7 @@ SceneManager::SceneManager() {
   scenes_.push_back(std::make_unique<LineSegmentIntersectionScene>());
   scenes_.push_back(std::make_unique<ConvexPolygonIntersectionScene>());
   scenes_.push_back(std::make_unique<TriangulationScene>());
+  scenes_.push_back(std::make_unique<VoronoiScene>());
   
   // Set first scene as active
   if (!scenes_.empty()) {

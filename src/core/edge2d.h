@@ -77,6 +77,11 @@ class Edge2D {
     return !(*this == other);
   }
 
+  bool operator<(const Edge2D& other) const {
+    if (p1 != other.p1) return p1 < other.p1;
+    return p2 < other.p2;
+  }
+
   // Output
   friend std::ostream& operator<<(std::ostream& os, const Edge2D& e) {
     os << "Edge(" << e.p1 << " -> " << e.p2 << ")";

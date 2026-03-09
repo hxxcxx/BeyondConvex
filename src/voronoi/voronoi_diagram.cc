@@ -41,36 +41,50 @@ VoronoiDiagramResult VoronoiDiagram::GenerateIncremental(
   
   result.sites = sites;
   
-  // For each pair of sites, compute their bisector and clip it to the bounding box
+  // Store Voronoi cell for each site
+  std::vector<std::vector<Point2D>> cells(sites.size());
+  
+  // Initialize each cell as the bounding box
+  std::vector<Point2D> bounding_box = {
+    Point2D(bounds_min_x, bounds_min_y),
+    Point2D(bounds_max_x, bounds_min_y),
+    Point2D(bounds_max_x, bounds_max_y),
+    Point2D(bounds_min_x, bounds_max_y)
+  };
+  
+  // For each site, compute its Voronoi cell by clipping with half-planes
   for (size_t i = 0; i < sites.size(); ++i) {
-    for (size_t j = i + 1; j < sites.size(); ++j) {
-      // Compute bisector between site i and site j
+    cells[i] = bounding_box;
+    
+    // Clip against all other sites
+    for (size_t j = 0; j < sites.size(); ++j) {
+      if (i == j) continue;
+      
+      // Compute perpendicular bisector between site i and site j
       Vector2D to_j = sites[j] - sites[i];
       Point2D midpoint(sites[i].x + to_j.x * 0.5, sites[i].y + to_j.y * 0.5);
       
-      // Perpendicular direction (bisector direction)
-      Vector2D bisector_dir(-to_j.y, to_j.x);
-      bisector_dir = bisector_dir.Normalize();
+      // Normal pointing towards site i (away from site j)
+      Vector2D normal = sites[i] - sites[j];
+      normal = normal.Normalize();
       
-      // Create a long bisector line
-      double large_number = 10000.0;
-      Point2D bisector_start(midpoint.x - bisector_dir.x * large_number,
-                             midpoint.y - bisector_dir.y * large_number);
-      Point2D bisector_end(midpoint.x + bisector_dir.x * large_number,
-                           midpoint.y + bisector_dir.y * large_number);
-      
-      // Clip the bisector to the bounding box
-      std::vector<Point2D> bisector_points = ClipLineToBoundingBox(
-        bisector_start, bisector_end,
-        bounds_min_x, bounds_min_y, bounds_max_x, bounds_max_y);
-      
-      // Add the clipped bisector as Voronoi edges
-      if (bisector_points.size() >= 2) {
-        for (size_t k = 0; k < bisector_points.size() - 1; ++k) {
-          result.edges.emplace_back(bisector_points[k], bisector_points[k + 1]);
-        }
-      }
+      // Clip the cell to the half-plane that contains site i
+      cells[i] = ClipPolygonToHalfplane(cells[i], midpoint, normal);
     }
+  }
+  
+  // Collect edges from all cells
+  std::set<Edge2D> edge_set;
+  for (const auto& cell : cells) {
+    for (size_t i = 0; i < cell.size(); ++i) {
+      size_t next = (i + 1) % cell.size();
+      edge_set.emplace(cell[i], cell[next]);
+    }
+  }
+  
+  // Convert set to vector
+  for (const auto& edge : edge_set) {
+    result.edges.push_back(edge);
   }
   
   return result;
@@ -197,130 +211,6 @@ Point2D VoronoiDiagram::IntersectLineWithHalfplane(
   double t = -(to_line.x * normal.x + to_line.y * normal.y) / denom;
   
   return Point2D(seg_start.x + seg_dir.x * t, seg_start.y + seg_dir.y * t);
-}
-
-std::vector<Point2D> VoronoiDiagram::ClipLineToBoundingBox(
-    const Point2D& p1,
-    const Point2D& p2,
-    double bounds_min_x,
-    double bounds_min_y,
-    double bounds_max_x,
-    double bounds_max_y) {
-  
-  std::vector<Point2D> result;
-  result.push_back(p1);
-  result.push_back(p2);
-  
-  // Clip against each of the four boundaries
-  // Left boundary (x = bounds_min_x)
-  {
-    std::vector<Point2D> temp;
-    for (size_t i = 0; i < result.size(); ++i) {
-      size_t next = (i + 1) % result.size();
-      const Point2D& curr = result[i];
-      const Point2D& next_pt = result[next];
-      
-      bool curr_inside = curr.x >= bounds_min_x - 1e-10;
-      bool next_inside = next_pt.x >= bounds_min_x - 1e-10;
-      
-      if (curr_inside) {
-        temp.push_back(curr);
-      }
-      
-      if (curr_inside != next_inside) {
-        // Intersect with x = bounds_min_x
-        double t = (bounds_min_x - curr.x) / (next_pt.x - curr.x);
-        if (t >= 0.0 && t <= 1.0) {
-          double y = curr.y + t * (next_pt.y - curr.y);
-          temp.emplace_back(bounds_min_x, y);
-        }
-      }
-    }
-    result = temp;
-  }
-  
-  // Right boundary (x = bounds_max_x)
-  {
-    std::vector<Point2D> temp;
-    for (size_t i = 0; i < result.size(); ++i) {
-      size_t next = (i + 1) % result.size();
-      const Point2D& curr = result[i];
-      const Point2D& next_pt = result[next];
-      
-      bool curr_inside = curr.x <= bounds_max_x + 1e-10;
-      bool next_inside = next_pt.x <= bounds_max_x + 1e-10;
-      
-      if (curr_inside) {
-        temp.push_back(curr);
-      }
-      
-      if (curr_inside != next_inside) {
-        // Intersect with x = bounds_max_x
-        double t = (bounds_max_x - curr.x) / (next_pt.x - curr.x);
-        if (t >= 0.0 && t <= 1.0) {
-          double y = curr.y + t * (next_pt.y - curr.y);
-          temp.emplace_back(bounds_max_x, y);
-        }
-      }
-    }
-    result = temp;
-  }
-  
-  // Bottom boundary (y = bounds_min_y)
-  {
-    std::vector<Point2D> temp;
-    for (size_t i = 0; i < result.size(); ++i) {
-      size_t next = (i + 1) % result.size();
-      const Point2D& curr = result[i];
-      const Point2D& next_pt = result[next];
-      
-      bool curr_inside = curr.y >= bounds_min_y - 1e-10;
-      bool next_inside = next_pt.y >= bounds_min_y - 1e-10;
-      
-      if (curr_inside) {
-        temp.push_back(curr);
-      }
-      
-      if (curr_inside != next_inside) {
-        // Intersect with y = bounds_min_y
-        double t = (bounds_min_y - curr.y) / (next_pt.y - curr.y);
-        if (t >= 0.0 && t <= 1.0) {
-          double x = curr.x + t * (next_pt.x - curr.x);
-          temp.emplace_back(x, bounds_min_y);
-        }
-      }
-    }
-    result = temp;
-  }
-  
-  // Top boundary (y = bounds_max_y)
-  {
-    std::vector<Point2D> temp;
-    for (size_t i = 0; i < result.size(); ++i) {
-      size_t next = (i + 1) % result.size();
-      const Point2D& curr = result[i];
-      const Point2D& next_pt = result[next];
-      
-      bool curr_inside = curr.y <= bounds_max_y + 1e-10;
-      bool next_inside = next_pt.y <= bounds_max_y + 1e-10;
-      
-      if (curr_inside) {
-        temp.push_back(curr);
-      }
-      
-      if (curr_inside != next_inside) {
-        // Intersect with y = bounds_max_y
-        double t = (bounds_max_y - curr.y) / (next_pt.y - curr.y);
-        if (t >= 0.0 && t <= 1.0) {
-          double x = curr.x + t * (next_pt.x - curr.x);
-          temp.emplace_back(x, bounds_max_y);
-        }
-      }
-    }
-    result = temp;
-  }
-  
-  return result;
 }
 
 VoronoiDiagramResult VoronoiDiagram::GenerateFortune(

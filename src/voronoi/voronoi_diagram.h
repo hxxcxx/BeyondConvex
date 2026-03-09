@@ -95,15 +95,6 @@ class VoronoiDiagram {
       const Point2D& seg_end,
       const Point2D& point_on_line,
       const Vector2D& normal);
-  
-  // Helper: Clip line segment to bounding box
-  static std::vector<Point2D> ClipLineToBoundingBox(
-      const Point2D& p1,
-      const Point2D& p2,
-      double bounds_min_x,
-      double bounds_min_y,
-      double bounds_max_x,
-      double bounds_max_y);
 };
 
 }  // namespace geometry

@@ -1,5 +1,6 @@
 #include "dcel_test_scene.h"
 #include <imgui.h>
+#include "../../../src/triangulation/triangulation.h"
 #include <random>
 #include <cmath>
 #include <algorithm>
@@ -30,6 +31,7 @@ DCELTestScene::DCELTestScene()
       key_r_pressed_(false) {
   
   InitializeDCEL();
+  line_trajectory_.clear();
 }
 
 std::string DCELTestScene::Name() const {
@@ -57,13 +59,14 @@ void DCELTestScene::Update(float delta_time) {
   }
   if (ImGui::IsKeyPressed(ImGuiKey_2)) {
     current_mode_ = Mode::Circumcircle;
-    show_circumcircles_ = !show_circumcircles_;
+    highlighted_face_ = nullptr;  // Reset highlighted face when switching to circumcircle mode
   }
   if (ImGui::IsKeyPressed(ImGuiKey_3)) {
     current_mode_ = Mode::LineSweep;
     drawing_line_ = false;
     line_complete_ = false;
     swept_faces_.clear();
+    line_trajectory_.clear();
   }
   if (ImGui::IsKeyPressed(ImGuiKey_R)) {
     InitializeDCEL();
@@ -71,6 +74,16 @@ void DCELTestScene::Update(float delta_time) {
     drawing_line_ = false;
     line_complete_ = false;
     swept_faces_.clear();
+    line_trajectory_.clear();
+  }
+  
+  // Record trajectory when drawing line in LineSweep mode
+  if (current_mode_ == Mode::LineSweep && drawing_line_) {
+    // Get current mouse position
+    ImVec2 mouse_pos = ImGui::GetMousePos();
+    // Convert to canvas coordinates if needed
+    // For now, we'll add points during mouse move in a real implementation
+    // This is a simplified version
   }
 }
 
@@ -82,6 +95,11 @@ bool DCELTestScene::OnMouseClicked(double x, double y) {
       HandlePointLocation(mouse_point);
       break;
       
+    case Mode::Circumcircle:
+      // Find and highlight the clicked triangle for circumcircle display
+      highlighted_face_ = FindFaceContainingPoint(mouse_point);
+      break;
+      
     case Mode::LineSweep:
       if (!drawing_line_) {
         line_start_ = mouse_point;
@@ -89,10 +107,13 @@ bool DCELTestScene::OnMouseClicked(double x, double y) {
         drawing_line_ = true;
         line_complete_ = false;
         swept_faces_.clear();
+        line_trajectory_.clear();
+        line_trajectory_.push_back(mouse_point);
       } else {
         line_end_ = mouse_point;
         drawing_line_ = false;
         line_complete_ = true;
+        line_trajectory_.push_back(mouse_point);
         HandleLineSweep();
       }
       break;
@@ -134,14 +155,27 @@ void DCELTestScene::Render(float canvas_x, float canvas_y,
       break;
       
     case Mode::Circumcircle:
-      if (show_circumcircles_) {
-        for (auto* face : triangular_faces_) {
-          DrawCircumcircle(draw_list, face, canvas_x, canvas_y, canvas_height);
-        }
+      // Highlight the clicked triangle
+      if (highlighted_face_ != nullptr) {
+        RenderFace(draw_list, highlighted_face_, canvas_x, canvas_y, canvas_height, 
+                   IM_COL32(0, 255, 255, 100));
+        // Draw circumcircle for the highlighted triangle
+        DrawCircumcircle(draw_list, highlighted_face_, canvas_x, canvas_y, canvas_height);
       }
       break;
       
     case Mode::LineSweep:
+      // Draw line trajectory (show the drawing path)
+      if (line_trajectory_.size() > 1) {
+        for (size_t i = 0; i + 1 < line_trajectory_.size(); ++i) {
+          float x1 = canvas_x + line_trajectory_[i].x;
+          float y1 = canvas_y + canvas_height - line_trajectory_[i].y;
+          float x2 = canvas_x + line_trajectory_[i + 1].x;
+          float y2 = canvas_y + canvas_height - line_trajectory_[i + 1].y;
+          float alpha = 255.0f * (1.0f - static_cast<float>(i) / line_trajectory_.size());
+          draw_list->AddLine(ImVec2(x1, y1), ImVec2(x2, y2), IM_COL32(255, 255, 0, static_cast<int>(alpha)), 2.0f);
+        }
+      }
       // Draw line being drawn
       if (drawing_line_) {
         float x1 = canvas_x + line_start_.x;
@@ -170,8 +204,8 @@ void DCELTestScene::Render(float canvas_x, float canvas_y,
 void DCELTestScene::RenderUI() {
   ImGui::Text("DCEL Test Scene - Press keys to switch modes:");
   ImGui::TextColored(ImVec4(0, 1, 0, 1), "[1] Point Location - Click to find triangle");
-  ImGui::TextColored(ImVec4(0, 1, 1, 1), "[2] Circumcircle - Toggle circumcircle display");
-  ImGui::TextColored(ImVec4(1, 1, 0, 1), "[3] Line Sweep - Click twice to draw line");
+  ImGui::TextColored(ImVec4(0, 1, 1, 1), "[2] Circumcircle - Click triangle to show its circumcircle");
+  ImGui::TextColored(ImVec4(1, 1, 0, 1), "[3] Line Sweep - Click twice to draw line with trajectory");
   ImGui::TextColored(ImVec4(1, 0.5f, 0, 1), "[R] Regenerate triangulation");
   
   ImGui::Separator();
@@ -202,31 +236,68 @@ void DCELTestScene::InitializeDCEL() {
 }
 
 void DCELTestScene::GenerateRandomTriangulation() {
-  // Generate random points
   std::vector<Point2D> points;
   std::random_device rd;
   std::mt19937 gen(rd());
-  std::uniform_real_distribution<double> dis_x(point_margin_, canvas_max_x_ - point_margin_);
-  std::uniform_real_distribution<double> dis_y(point_margin_, canvas_max_y_ - point_margin_);
   
-  for (int i = 0; i < num_random_points_; ++i) {
-    points.emplace_back(dis_x(gen), dis_y(gen));
+  // Generate a grid that occupies 3/4 of the canvas and is centered
+  const int grid_size = 5;  // 5x5 grid for more triangles
+  const double canvas_width = canvas_max_x_ - canvas_min_x_;
+  const double canvas_height = canvas_max_y_ - canvas_min_y_;
+  
+  // Grid occupies 3/4 of canvas, centered
+  const double grid_width = canvas_width * 0.75;
+  const double grid_height = canvas_height * 0.75;
+  const double start_x = canvas_min_x_ + (canvas_width - grid_width) / 2.0;
+  const double start_y = canvas_min_y_ + (canvas_height - grid_height) / 2.0;
+  
+  const double spacing_x = grid_width / (grid_size - 1);
+  const double spacing_y = grid_height / (grid_size - 1);
+  
+  // Generate grid points with significant randomization for irregular triangles
+  std::uniform_real_distribution<double> jitter_x(-spacing_x * 0.35, spacing_x * 0.35);
+  std::uniform_real_distribution<double> jitter_y(-spacing_y * 0.35, spacing_y * 0.35);
+  
+  for (int row = 0; row < grid_size; ++row) {
+    for (int col = 0; col < grid_size; ++col) {
+      double x = start_x + col * spacing_x + jitter_x(gen);
+      double y = start_y + row * spacing_y + jitter_y(gen);
+      
+      // Keep points within canvas bounds
+      x = std::max(canvas_min_x_ + 10.0, std::min(canvas_max_x_ - 10.0, x));
+      y = std::max(canvas_min_y_ + 10.0, std::min(canvas_max_y_ - 10.0, y));
+      
+      points.emplace_back(x, y);
+    }
   }
   
-  // Simple triangulation: fan from first point
-  std::vector<std::array<int, 3>> triangles;
+  if (points.size() < 3) {
+    return;
+  }
   
-  if (points.size() >= 3) {
-    // Sort points by x-coordinate for better triangulation
-    std::vector<size_t> indices(points.size());
-    std::iota(indices.begin(), indices.end(), 0);
-    std::sort(indices.begin(), indices.end(), [&points](size_t a, size_t b) {
-      return points[a].x < points[b].x;
-    });
-    
-    // Create triangles using a simple fan approach
-    for (size_t i = 0; i + 2 < indices.size(); ++i) {
-      triangles.push_back({{static_cast<int>(indices[0]), static_cast<int>(indices[i + 1]), static_cast<int>(indices[i + 2])}});
+  // Create triangles by connecting grid points with random diagonal direction
+  // This makes the triangulation less regular
+  std::vector<std::array<int, 3>> triangles;
+  std::uniform_int_distribution<int> random_diag(0, 1);
+  
+  for (int row = 0; row < grid_size - 1; ++row) {
+    for (int col = 0; col < grid_size - 1; ++col) {
+      // Get the 4 corners of the grid cell
+      int v0 = row * grid_size + col;           // top-left
+      int v1 = row * grid_size + (col + 1);     // top-right
+      int v2 = (row + 1) * grid_size + col;     // bottom-left
+      int v3 = (row + 1) * grid_size + (col + 1); // bottom-right
+      
+      // Randomly choose diagonal direction for more irregular appearance
+      if (random_diag(gen) == 0) {
+        // Diagonal from top-left to bottom-right
+        triangles.push_back({{v0, v1, v3}});
+        triangles.push_back({{v0, v3, v2}});
+      } else {
+        // Diagonal from top-right to bottom-left
+        triangles.push_back({{v0, v1, v2}});
+        triangles.push_back({{v1, v3, v2}});
+      }
     }
   }
   

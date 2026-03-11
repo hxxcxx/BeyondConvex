@@ -95,6 +95,7 @@ class DCELTestScene : public GeometryScene {
   bool drawing_line_;
   bool line_complete_;
   std::vector<Face*> swept_faces_;
+  std::vector<Point2D> line_trajectory_;  // Trajectory points for visualization
   
   // Canvas bounds
   double canvas_min_x_;

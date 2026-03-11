@@ -2,8 +2,12 @@
 
 #include "dcel.h"
 #include "../core/point2d.h"
+#include "../core/edge2d.h"
 #include <vector>
 #include <memory>
+#include <unordered_map>
+#include <functional>
+#include <array>
 
 namespace geometry {
 
@@ -85,7 +89,7 @@ class DCELBuilder {
    */
   static Vertex* FindOrCreateVertex(
       const Point2D& point,
-      std::unordered_map<Point2D, Vertex*, Point2DHash>& vertex_map,
+      std::unordered_map<Point2D, Vertex*, std::function<size_t(const Point2D&)>>& vertex_map,
       DCEL* dcel);
   
   /**

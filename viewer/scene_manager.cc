@@ -13,7 +13,7 @@ SceneManager::SceneManager() {
   scenes_.push_back(std::make_unique<ConvexPolygonIntersectionScene>());
   scenes_.push_back(std::make_unique<TriangulationScene>());
   scenes_.push_back(std::make_unique<VoronoiScene>());
-  scenes_.push_back(std::make_unique<viewer::DCELTestScene>());
+  scenes_.push_back(std::make_unique<DCELTestScene>());
   
   // Set first scene as active
   if (!scenes_.empty()) {

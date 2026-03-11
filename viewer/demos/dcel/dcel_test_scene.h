@@ -8,7 +8,11 @@
 #include <vector>
 #include <memory>
 
-namespace viewer {
+// Forward declarations and ImGui types
+#include <imgui.h>
+struct ImDrawList;
+
+namespace geometry {
 
 /**
  * @brief DCEL Test Scene
@@ -18,7 +22,7 @@ namespace viewer {
  * 2. Circumcircle visualization: Show circumcircle of triangles
  * 3. Line sweep: Draw a line and fill intersected triangles
  */
-class DCELTestScene : public geometry::GeometryScene {
+class DCELTestScene : public GeometryScene {
  public:
   DCELTestScene();
   ~DCELTestScene() override = default;
@@ -40,31 +44,36 @@ class DCELTestScene : public geometry::GeometryScene {
   
   // Feature 1: Point location
   void HandlePointLocation(const Point2D& point);
-  geometry::Face* FindFaceContainingPoint(const Point2D& point);
-  bool PointInTriangle(const Point2D& point, const std::vector<geometry::Vertex*>& vertices);
+  Face* FindFaceContainingPoint(const Point2D& point);
+  bool PointInTriangle(const Point2D& point, const std::vector<Vertex*>& vertices);
   
   // Feature 2: Circumcircle
-  void DrawCircumcircle(geometry::Face* face);
-  Point2D ComputeCircumcenter(const std::vector<geometry::Vertex*>& vertices);
-  double ComputeCircumradius(const Point2D& center, const std::vector<geometry::Vertex*>& vertices);
+  void DrawCircumcircle(ImDrawList* draw_list, Face* face,
+                       float canvas_x, float canvas_y, float canvas_height);
+  Point2D ComputeCircumcenter(const std::vector<Vertex*>& vertices);
+  double ComputeCircumradius(const Point2D& center, const std::vector<Vertex*>& vertices);
   
   // Feature 3: Line sweep
   void HandleLineSweep();
-  std::vector<geometry::Face*> FindIntersectedFaces(const Edge2D& line);
-  bool LineIntersectsTriangle(const Edge2D& line, const std::vector<geometry::Vertex*>& vertices);
+  std::vector<Face*> FindIntersectedFaces(const Edge2D& line);
+  bool LineIntersectsTriangle(const Edge2D& line, const std::vector<Vertex*>& vertices);
   bool LineIntersectsSegment(const Point2D& line_start, const Point2D& line_end,
                              const Point2D& seg_start, const Point2D& seg_end);
   
   // Rendering helpers
-  void RenderDCEL();
-  void RenderFace(geometry::Face* face, float r, float g, float b, float a = 1.0f);
-  void RenderVertex(geometry::Vertex* vertex, float r, float g, float b);
-  void RenderHalfEdge(geometry::HalfEdge* edge, float r, float g, float b);
-  void RenderCircle(const Point2D& center, double radius, float r, float g, float b, float a = 1.0f);
+  void RenderDCEL(ImDrawList* draw_list, float canvas_x, float canvas_y, float canvas_height);
+  void RenderFace(ImDrawList* draw_list, Face* face, 
+                  float canvas_x, float canvas_y, float canvas_height, ImU32 color);
+  void RenderVertex(ImDrawList* draw_list, Vertex* vertex,
+                   float canvas_x, float canvas_y, float canvas_height, ImU32 color);
+  void RenderHalfEdge(ImDrawList* draw_list, HalfEdge* edge,
+                     float canvas_x, float canvas_y, float canvas_height, ImU32 color);
+  void RenderCircle(ImDrawList* draw_list, const Point2D& center, double radius,
+                   float canvas_x, float canvas_y, float canvas_height, ImU32 color);
   
   // DCEL data
-  std::unique_ptr<geometry::DCEL> dcel_;
-  std::vector<geometry::Face*> triangular_faces_;
+  std::unique_ptr<DCEL> dcel_;
+  std::vector<Face*> triangular_faces_;
   
   // Feature states
   enum class Mode {
@@ -75,7 +84,7 @@ class DCELTestScene : public geometry::GeometryScene {
   Mode current_mode_;
   
   // Point location state
-  geometry::Face* highlighted_face_;
+  Face* highlighted_face_;
   
   // Circumcircle state
   bool show_circumcircles_;
@@ -85,7 +94,7 @@ class DCELTestScene : public geometry::GeometryScene {
   Point2D line_end_;
   bool drawing_line_;
   bool line_complete_;
-  std::vector<geometry::Face*> swept_faces_;
+  std::vector<Face*> swept_faces_;
   
   // Canvas bounds
   double canvas_min_x_;
@@ -104,4 +113,4 @@ class DCELTestScene : public geometry::GeometryScene {
   bool key_r_pressed_;
 };
 
-}  // namespace viewer
+}  // namespace geometry

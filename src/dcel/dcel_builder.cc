@@ -1,7 +1,7 @@
 #include "dcel_builder.h"
-#include "../core/geometry_utils.h"
 #include <stdexcept>
 #include <unordered_map>
+#include <map>
 #include <array>
 
 namespace geometry {
@@ -108,7 +108,7 @@ std::vector<Face*> DCELBuilder::BuildTriangulation(
   }
   
   // Map to track created edges (avoid duplicates)
-  std::unordered_map<std::pair<int, int>, HalfEdge*> edge_map;
+  std::map<std::pair<int, int>, HalfEdge*> edge_map;
   
   std::vector<Face*> faces;
   
@@ -196,7 +196,7 @@ std::vector<Face*> DCELBuilder::BuildVoronoiDiagram(
 
 Vertex* DCELBuilder::FindOrCreateVertex(
     const Point2D& point,
-    std::unordered_map<Point2D, Vertex*, Point2DHash>& vertex_map,
+    std::unordered_map<Point2D, Vertex*, std::function<size_t(const Point2D&)>>& vertex_map,
     DCEL* dcel) {
   
   auto it = vertex_map.find(point);

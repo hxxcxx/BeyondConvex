@@ -8,6 +8,8 @@
 #include "demos/intersection/line_segment_intersection_scene.h"
 #include "demos/intersection/convex_polygon_intersection_scene.h"
 #include "demos/triangulation/triangulation_scene.h"
+#include "demos/voronoi/voronoi_scene.h"
+#include "demos/dcel/dcel_test_scene.h"
 #include <memory>
 #include <vector>
 

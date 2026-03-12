@@ -28,9 +28,10 @@ DCELTestScene::DCELTestScene()
       key_1_pressed_(false),
       key_2_pressed_(false),
       key_3_pressed_(false),
-      key_r_pressed_(false) {
+      key_r_pressed_(false),
+      dcel_initialized_(false) {
   
-  InitializeDCEL();
+  dcel_ = std::make_unique<DCEL>();
   line_trajectory_.clear();
 }
 
@@ -49,6 +50,7 @@ void DCELTestScene::Reset() {
   line_complete_ = false;
   swept_faces_.clear();
   show_circumcircles_ = false;
+  // Don't reset dcel_initialized_ so we keep the current canvas size
 }
 
 void DCELTestScene::Update(float delta_time) {
@@ -69,7 +71,9 @@ void DCELTestScene::Update(float delta_time) {
     line_trajectory_.clear();
   }
   if (ImGui::IsKeyPressed(ImGuiKey_R)) {
-    InitializeDCEL();
+    // Regenerate triangulation with current canvas size
+    dcel_initialized_ = false;
+    GenerateRandomTriangulationIfNeeded();
     highlighted_face_ = nullptr;
     drawing_line_ = false;
     line_complete_ = false;
@@ -134,6 +138,9 @@ void DCELTestScene::Render(float canvas_x, float canvas_y,
   canvas_min_y_ = canvas_y;
   canvas_max_x_ = canvas_x + canvas_width;
   canvas_max_y_ = canvas_y + canvas_height;
+  
+  // Generate triangulation if not yet done (now that we have correct canvas size)
+  GenerateRandomTriangulationIfNeeded();
   
   // Clear background (draw a rectangle)
   draw_list->AddRectFilled(
@@ -232,10 +239,26 @@ void DCELTestScene::RenderUI() {
 
 void DCELTestScene::InitializeDCEL() {
   dcel_ = std::make_unique<DCEL>();
-  GenerateRandomTriangulation();
+  dcel_initialized_ = false;
+}
+
+void DCELTestScene::GenerateRandomTriangulationIfNeeded() {
+  // Check if canvas size has changed significantly or if not yet initialized
+  const double canvas_width = canvas_max_x_ - canvas_min_x_;
+  const double canvas_height = canvas_max_y_ - canvas_min_y_;
+  
+  // Only generate if canvas is valid size and not yet initialized
+  if (canvas_width > 100.0 && canvas_height > 100.0 && !dcel_initialized_) {
+    GenerateRandomTriangulation();
+    dcel_initialized_ = true;
+  }
 }
 
 void DCELTestScene::GenerateRandomTriangulation() {
+  // Clear previous DCEL data
+  dcel_->Clear();
+  triangular_faces_.clear();
+  
   std::vector<Point2D> points;
   std::random_device rd;
   std::mt19937 gen(rd());
@@ -246,10 +269,11 @@ void DCELTestScene::GenerateRandomTriangulation() {
   const double canvas_height = canvas_max_y_ - canvas_min_y_;
   
   // Grid occupies 3/4 of canvas, centered
+  // Use relative coordinates (0 to canvas_width, 0 to canvas_height)
   const double grid_width = canvas_width * 0.75;
   const double grid_height = canvas_height * 0.75;
-  const double start_x = canvas_min_x_ + (canvas_width - grid_width) / 2.0;
-  const double start_y = canvas_min_y_ + (canvas_height - grid_height) / 2.0;
+  const double start_x = (canvas_width - grid_width) / 2.0;  // Relative to 0
+  const double start_y = (canvas_height - grid_height) / 2.0;  // Relative to 0
   
   const double spacing_x = grid_width / (grid_size - 1);
   const double spacing_y = grid_height / (grid_size - 1);
@@ -263,9 +287,9 @@ void DCELTestScene::GenerateRandomTriangulation() {
       double x = start_x + col * spacing_x + jitter_x(gen);
       double y = start_y + row * spacing_y + jitter_y(gen);
       
-      // Keep points within canvas bounds
-      x = std::max(canvas_min_x_ + 10.0, std::min(canvas_max_x_ - 10.0, x));
-      y = std::max(canvas_min_y_ + 10.0, std::min(canvas_max_y_ - 10.0, y));
+      // Keep points within canvas bounds (using relative coordinates)
+      x = std::max(10.0, std::min(canvas_width - 10.0, x));
+      y = std::max(10.0, std::min(canvas_height - 10.0, y));
       
       points.emplace_back(x, y);
     }

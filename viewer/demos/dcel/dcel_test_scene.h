@@ -41,6 +41,7 @@ class DCELTestScene : public GeometryScene {
   // Initialization
   void InitializeDCEL();
   void GenerateRandomTriangulation();
+  void GenerateRandomTriangulationIfNeeded();
   
   // Feature 1: Point location
   void HandlePointLocation(const Point2D& point);
@@ -112,6 +113,9 @@ class DCELTestScene : public GeometryScene {
   bool key_2_pressed_;
   bool key_3_pressed_;
   bool key_r_pressed_;
+  
+  // Initialization state
+  bool dcel_initialized_;
 };
 
 }  // namespace geometry

@@ -4,6 +4,8 @@
 #include "voronoi_algorithm.h"
 #include "half_plane_clipper.h"
 #include "../dcel/dcel.h"
+#include <map>
+#include <vector>
 
 namespace geometry {
 
@@ -95,6 +97,32 @@ class DCELVoronoi : public IVoronoiAlgorithm {
    * @param normal Normal vector pointing towards retained half-plane
    */
   void ClipFaceByHalfPlane(
+      DCEL* dcel,
+      Face* face,
+      const Point2D& point_on_line,
+      const Vector2D& normal) const;
+  
+  /**
+   * @brief Find the face that contains a given point
+   * @param dcel DCEL structure
+   * @param point Point to locate
+   * @param face_sites Map of faces to their sites
+   * @return Pointer to containing face, or nullptr if not found
+   */
+  Face* FindFaceContainingPoint(
+      DCEL* dcel,
+      const Point2D& point,
+      const std::map<Face*, Point2D>& face_sites) const;
+  
+  /**
+   * @brief Split a face by a line (bisector)
+   * @param dcel DCEL structure
+   * @param face Face to split
+   * @param point_on_line Point on the splitting line
+   * @param normal Normal vector of the line
+   * @return Pointer to new face (the part on the positive side)
+   */
+  Face* SplitFaceByLine(
       DCEL* dcel,
       Face* face,
       const Point2D& point_on_line,

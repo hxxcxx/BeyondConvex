@@ -2,7 +2,7 @@
 #define GEOMETRY_VORONOI_DCEL_H_
 
 #include "voronoi_algorithm.h"
-#include "half_plane_clipper.h"
+#include "dcel_helper.h"
 #include "../dcel/dcel.h"
 #include <map>
 #include <vector>
@@ -78,74 +78,19 @@ class DCELVoronoi : public IVoronoiAlgorithm {
   
  private:
   /**
-   * @brief Create initial bounding box cell in DCEL
+   * @brief Clip a cell by all other sites
    * @param dcel DCEL structure
-   * @param site Site point
+   * @param cell Cell to clip
+   * @param sites All sites
+   * @param cell_index Index of the cell's site
    * @param bounds Bounding box
-   * @return Pointer to created face
    */
-  Face* CreateBoundingBoxCell(
+  void ClipCellByAllSites(
       DCEL* dcel,
-      const Point2D& site,
+      Face* cell,
+      const std::vector<Point2D>& sites,
+      size_t cell_index,
       const VoronoiBounds& bounds) const;
-  
-  /**
-   * @brief Clip a DCEL face by a half-plane
-   * @param dcel DCEL structure
-   * @param face Face to clip
-   * @param point_on_line Point on the clipping line
-   * @param normal Normal vector pointing towards retained half-plane
-   */
-  void ClipFaceByHalfPlane(
-      DCEL* dcel,
-      Face* face,
-      const Point2D& point_on_line,
-      const Vector2D& normal) const;
-  
-  /**
-   * @brief Find the face that contains a given point
-   * @param dcel DCEL structure
-   * @param point Point to locate
-   * @param face_sites Map of faces to their sites
-   * @return Pointer to containing face, or nullptr if not found
-   */
-  Face* FindFaceContainingPoint(
-      DCEL* dcel,
-      const Point2D& point,
-      const std::map<Face*, Point2D>& face_sites) const;
-  
-  /**
-   * @brief Split a face by a line (bisector)
-   * @param dcel DCEL structure
-   * @param face Face to split
-   * @param point_on_line Point on the splitting line
-   * @param normal Normal vector of the line
-   * @return Pointer to new face (the part on the positive side)
-   */
-  Face* SplitFaceByLine(
-      DCEL* dcel,
-      Face* face,
-      const Point2D& point_on_line,
-      const Vector2D& normal) const;
-  
-  /**
-   * @brief Merge shared edges in DCEL
-   * @param dcel DCEL structure
-   * 
-   * This method identifies edges that are shared between multiple
-   * faces and sets up proper twin relationships.
-   */
-  void MergeSharedEdges(DCEL* dcel) const;
-  
-  /**
-   * @brief Convert DCEL to VoronoiDiagramResult
-   * @param dcel DCEL structure
-   * @param sites Original site points
-   * @return Voronoi diagram result
-   */
-  VoronoiDiagramResult ConvertDCELToResult(
-      const DCEL* dcel,
-      const std::vector<Point2D>& sites) const;
 };
 
 }  // namespace geometry

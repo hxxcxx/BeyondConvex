@@ -1,6 +1,8 @@
 #include "voronoi_scene.h"
 #include <imgui.h>
 #include <cmath>
+#include <cstdlib>
+#include <algorithm>
 
 namespace geometry {
 
@@ -101,7 +103,12 @@ void VoronoiScene::RenderUI() {
       if (ImGui::Selectable(algo->Name().c_str(), is_selected)) {
         if (current_algorithm_index_ != static_cast<int>(i)) {
           current_algorithm_index_ = static_cast<int>(i);
-          if (!sites_.empty()) {
+          
+          // If switching to Divide & Conquer, auto-generate random points
+          if (available_algorithms_[i] == VoronoiAlgorithmType::kDivideConquer) {
+            GenerateRandomSites(8);  // Generate 8 random sites
+            GenerateVoronoi();
+          } else if (!sites_.empty()) {
             GenerateVoronoi();  // Regenerate with new algorithm
           }
         }
@@ -152,6 +159,29 @@ void VoronoiScene::RenderUI() {
   ImGui::BulletText("Left click: Add site");
   ImGui::BulletText("Switch algorithm to compare");
   ImGui::BulletText("Canvas size = World bounds");
+}
+
+void VoronoiScene::GenerateRandomSites(int count) {
+  sites_.clear();
+  
+  // Generate random sites within bounds (with some padding)
+  double padding = 50.0;
+  double min_x = bounds_min_x_ + padding;
+  double max_x = bounds_max_x_ - padding;
+  double min_y = bounds_min_y_ + padding;
+  double max_y = bounds_max_y_ - padding;
+  
+  for (int i = 0; i < count; ++i) {
+    double x = min_x + (double)rand() / RAND_MAX * (max_x - min_x);
+    double y = min_y + (double)rand() / RAND_MAX * (max_y - min_y);
+    sites_.push_back(Point2D(x, y));
+  }
+  
+  // Sort by x-coordinate for better divide & conquer performance
+  std::sort(sites_.begin(), sites_.end(),
+      [](const Point2D& a, const Point2D& b) {
+        return a.x < b.x || (a.x == b.x && a.y < b.y);
+      });
 }
 
 void VoronoiScene::GenerateVoronoi() {

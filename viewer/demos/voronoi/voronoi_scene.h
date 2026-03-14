@@ -30,6 +30,7 @@ class VoronoiScene : public GeometryScene {
   
  private:
   void GenerateVoronoi();
+  void GenerateRandomSites(int count);
   void Clear();
   void InitializeAlgorithms();
   

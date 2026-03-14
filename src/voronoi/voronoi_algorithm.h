@@ -72,9 +72,9 @@ class IVoronoiAlgorithm {
 enum class VoronoiAlgorithmType {
   kIncremental,      // Incremental half-plane clipping
   kIncrementalDCEL,  // Incremental algorithm using DCEL
+  kDivideConquer,    // Divide and conquer algorithm
   // Future algorithms:
   // kFortune,         // Fortune's sweep line algorithm
-  // kDivideConquer,   // Divide and conquer algorithm
   // kDelaunayDual,    // Based on Delaunay triangulation
 };
 

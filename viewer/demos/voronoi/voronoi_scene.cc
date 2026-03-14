@@ -12,7 +12,8 @@ VoronoiScene::VoronoiScene()
       bounds_min_y_(0.0),
       bounds_max_x_(800.0),
       bounds_max_y_(600.0),
-      site_radius_(5.0f) {
+      site_radius_(5.0f),
+      current_algorithm_index_(0) {
   
   site_color_[0] = 1.0f;
   site_color_[1] = 0.0f;
@@ -21,9 +22,17 @@ VoronoiScene::VoronoiScene()
   edge_color_[0] = 0.0f;
   edge_color_[1] = 0.8f;
   edge_color_[2] = 1.0f;
+  
+  InitializeAlgorithms();
 }
 
 void VoronoiScene::Initialize() {
+  InitializeAlgorithms();
+}
+
+void VoronoiScene::InitializeAlgorithms() {
+  available_algorithms_ = Voronoi::GetAvailableAlgorithms();
+  current_algorithm_index_ = 0;
 }
 
 void VoronoiScene::Reset() {
@@ -81,41 +90,83 @@ void VoronoiScene::Render(float canvas_x, float canvas_y,
 }
 
 void VoronoiScene::RenderUI() {
-  ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_FirstUseEver);
-  ImGui::SetNextWindowSize(ImVec2(250, 200), ImGuiCond_FirstUseEver);
+  // Algorithm selection combo box (like ConvexPolygonIntersectionScene)
+  ImGui::Text("Algorithm:");
+  if (ImGui::BeginCombo("##Algorithm", 
+      Voronoi::GetAlgorithmInfo(available_algorithms_[current_algorithm_index_])->Name().c_str())) {
+    for (size_t i = 0; i < available_algorithms_.size(); ++i) {
+      bool is_selected = (static_cast<int>(i) == current_algorithm_index_);
+      auto algo = Voronoi::GetAlgorithmInfo(available_algorithms_[i]);
+      
+      if (ImGui::Selectable(algo->Name().c_str(), is_selected)) {
+        if (current_algorithm_index_ != static_cast<int>(i)) {
+          current_algorithm_index_ = static_cast<int>(i);
+          if (!sites_.empty()) {
+            GenerateVoronoi();  // Regenerate with new algorithm
+          }
+        }
+      }
+      
+      // Show tooltip with description on hover
+      if (ImGui::IsItemHovered()) {
+        ImGui::BeginTooltip();
+        ImGui::Text("Complexity: %s", algo->Complexity().c_str());
+        ImGui::TextWrapped("Description: %s", algo->Description().c_str());
+        ImGui::EndTooltip();
+      }
+      
+      if (is_selected) {
+        ImGui::SetItemDefaultFocus();
+      }
+    }
+    ImGui::EndCombo();
+  }
   
-  ImGui::Begin("Voronoi Diagram");
-  
-  ImGui::Text("Sites: %zu", sites_.size());
-  ImGui::Text("Cells: %zu", voronoi_result_.CellCount());
+  ImGui::Text("Complexity: %s", 
+              Voronoi::GetAlgorithmInfo(available_algorithms_[current_algorithm_index_])->Complexity().c_str());
   
   ImGui::Separator();
   
+  // Scene Info - Statistics
+  ImGui::Text("Sites: %zu", sites_.size());
+  ImGui::Text("Cells: %zu", voronoi_result_.CellCount());
+  ImGui::Text("Edges: %zu", voronoi_result_.EdgeCount());
+  
+  ImGui::Separator();
+  
+  // Display options
+  ImGui::Checkbox("Show Sites", &show_sites_);
+  ImGui::Checkbox("Show Edges", &show_edges_);
+  
+  ImGui::Separator();
+  
+  // Actions
   if (ImGui::Button("Clear All")) {
     Clear();
   }
   
   ImGui::Separator();
   
-  ImGui::Checkbox("Show Sites", &show_sites_);
-  ImGui::Checkbox("Show Edges", &show_edges_);
-  
-  ImGui::Separator();
-  
+  // Instructions
   ImGui::Text("Instructions:");
   ImGui::BulletText("Left click: Add site");
+  ImGui::BulletText("Switch algorithm to compare");
   ImGui::BulletText("Canvas size = World bounds");
-  
-  ImGui::End();
 }
 
 void VoronoiScene::GenerateVoronoi() {
-  voronoi_result_ = VoronoiDiagram::Generate(
-      sites_,
-      bounds_min_x_,
-      bounds_min_y_,
-      bounds_max_x_,
-      bounds_max_y_);
+  if (available_algorithms_.empty()) {
+    return;
+  }
+  
+  // Get current algorithm
+  VoronoiAlgorithmType current_algo = available_algorithms_[current_algorithm_index_];
+  
+  // Create bounds
+  VoronoiBounds bounds(bounds_min_x_, bounds_min_y_, bounds_max_x_, bounds_max_y_);
+  
+  // Generate Voronoi diagram with selected algorithm
+  voronoi_result_ = Voronoi::Generate(sites_, current_algo, bounds);
 }
 
 void VoronoiScene::Clear() {

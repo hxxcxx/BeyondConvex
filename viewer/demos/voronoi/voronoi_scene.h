@@ -2,7 +2,7 @@
 #define VIEWER_VORONOI_SCENE_H_
 
 #include "../scene_base.h"
-#include "voronoi/voronoi_diagram.h"
+#include "voronoi/voronoi.h"
 #include <vector>
 
 namespace geometry {
@@ -17,7 +17,7 @@ class VoronoiScene : public GeometryScene {
   }
   
   std::string Description() const override {
-    return "Generate Voronoi diagrams from point sites.";
+    return "Generate Voronoi diagrams from point sites. Switch between different algorithms.";
   }
   
   void Initialize() override;
@@ -31,9 +31,14 @@ class VoronoiScene : public GeometryScene {
  private:
   void GenerateVoronoi();
   void Clear();
+  void InitializeAlgorithms();
   
   std::vector<Point2D> sites_;
   VoronoiDiagramResult voronoi_result_;
+  
+  // Algorithm selection
+  std::vector<VoronoiAlgorithmType> available_algorithms_;
+  int current_algorithm_index_;
   
   bool show_voronoi_;
   bool show_sites_;

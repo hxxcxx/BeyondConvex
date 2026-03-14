@@ -1,5 +1,6 @@
 #include "voronoi_dcel.h"
 #include <map>
+#include <set>
 #include <algorithm>
 
 namespace geometry {

@@ -1,4 +1,5 @@
 #include "voronoi_dcel.h"
+#include "voronoi_incremental.h"
 #include <map>
 #include <set>
 #include <algorithm>
@@ -21,41 +22,64 @@ DCEL* DCELVoronoi::GenerateDCEL(
     const std::vector<Point2D>& sites,
     const VoronoiBounds& bounds) {
   
+  // Use IncrementalVoronoi to generate the result first
+  // This is simpler and more reliable
+  IncrementalVoronoi incremental;
+  VoronoiDiagramResult result = incremental.Generate(sites, bounds);
+  
+  // Convert result to DCEL
   DCEL* dcel = new DCEL();
   
-  if (sites.empty()) {
+  if (result.sites.empty()) {
     return dcel;
   }
   
-  if (sites.size() == 1) {
-    // Single site: entire bounding box is one cell
-    CreateBoundingBoxCell(dcel, sites[0], bounds);
-    return dcel;
+  // Map from Point2D to Vertex*
+  std::map<Point2D, Vertex*> vertex_map;
+  
+  // Create all vertices
+  for (const auto& p : result.vertices) {
+    vertex_map[p] = dcel->CreateVertex(p);
   }
   
-  // Create initial cell for each site
-  std::vector<Face*> cells;
-  for (const auto& site : sites) {
-    Face* cell = CreateBoundingBoxCell(dcel, site, bounds);
-    cells.push_back(cell);
-  }
-  
-  // Clip each cell against all other sites
-  for (size_t i = 0; i < sites.size(); ++i) {
-    for (size_t j = 0; j < sites.size(); ++j) {
-      if (i == j) continue;
+  // Create faces for each cell
+  for (const auto& cell : result.cells) {
+    if (!cell.IsValid()) continue;
+    
+    // Get vertices for this cell
+    std::vector<Vertex*> cell_vertices;
+    for (const auto& p : cell.vertices) {
+      if (vertex_map.find(p) == vertex_map.end()) {
+        vertex_map[p] = dcel->CreateVertex(p);
+      }
+      cell_vertices.push_back(vertex_map[p]);
+    }
+    
+    // Build polygon
+    if (cell_vertices.size() >= 3) {
+      // Create edges
+      std::vector<HalfEdge*> edges;
+      for (size_t i = 0; i < cell_vertices.size(); ++i) {
+        Vertex* v1 = cell_vertices[i];
+        Vertex* v2 = cell_vertices[(i + 1) % cell_vertices.size()];
+        HalfEdge* he = dcel->CreateEdge(v1, v2);
+        edges.push_back(he);
+      }
       
-      // Compute perpendicular bisector
-      Point2D midpoint;
-      Vector2D normal;
-      HalfPlaneClipper::ComputeBisector(sites[i], sites[j], midpoint, normal);
+      // Connect edges into a cycle
+      for (size_t i = 0; i < edges.size(); ++i) {
+        HalfEdge* he = edges[i];
+        HalfEdge* next_he = edges[(i + 1) % edges.size()];
+        dcel->ConnectHalfEdges(he, next_he);
+      }
       
-      // Clip cell i by the half-plane
-      ClipFaceByHalfPlane(dcel, cells[i], midpoint, normal);
+      // Create face
+      Face* face = dcel->CreateFace();
+      dcel->SetFaceOfCycle(edges[0], face);
     }
   }
   
-  // Merge shared edges
+  // Merge shared edges (set twin relationships)
   MergeSharedEdges(dcel);
   
   return dcel;
@@ -104,39 +128,49 @@ void DCELVoronoi::ClipFaceByHalfPlane(
     return;
   }
   
-  // Clip polygon using half-plane
-  std::vector<Point2D> clipped_vertices;
-  
-  for (size_t i = 0; i < boundary_vertices.size(); ++i) {
-    Vertex* v1 = boundary_vertices[i];
-    Vertex* v2 = boundary_vertices[(i + 1) % boundary_vertices.size()];
-    
-    const Point2D& p1 = v1->GetCoordinates();
-    const Point2D& p2 = v2->GetCoordinates();
-    
-    bool inside1 = HalfPlaneClipper::IsInsideHalfPlane(p1, point_on_line, normal);
-    bool inside2 = HalfPlaneClipper::IsInsideHalfPlane(p2, point_on_line, normal);
-    
-    if (inside1) {
-      clipped_vertices.push_back(p1);
-    }
-    
-    if (inside1 != inside2) {
-      Point2D intersection = HalfPlaneClipper::IntersectSegmentWithLine(
-          p1, p2, point_on_line, normal);
-      clipped_vertices.push_back(intersection);
-    }
+  // Convert to Point2D vector
+  std::vector<Point2D> polygon;
+  for (auto* v : boundary_vertices) {
+    polygon.push_back(v->GetCoordinates());
   }
   
-  // Rebuild the face with clipped polygon
-  // Note: This is a simplified implementation
-  // A complete implementation would update the DCEL structure in-place
-  // For now, we create a new polygon and replace the old one
+  // Clip polygon using half-plane
+  std::vector<Point2D> clipped_vertices = 
+      HalfPlaneClipper::ClipPolygon(polygon, point_on_line, normal);
   
+  // Rebuild the face with clipped polygon
   if (clipped_vertices.size() >= 3) {
-    // Clear old face data
-    // (In a complete implementation, we would properly update the DCEL)
-    // For now, this is a placeholder
+    // Remove old half-edges of this face
+    // (Simplified: we'll create new edges and update the face)
+    
+    // Create new vertices and edges for clipped polygon
+    std::vector<Vertex*> new_vertices;
+    std::vector<HalfEdge*> new_edges;
+    
+    for (const auto& p : clipped_vertices) {
+      Vertex* v = dcel->CreateVertex(p);
+      new_vertices.push_back(v);
+    }
+    
+    // Create edges
+    for (size_t i = 0; i < new_vertices.size(); ++i) {
+      Vertex* v1 = new_vertices[i];
+      Vertex* v2 = new_vertices[(i + 1) % new_vertices.size()];
+      HalfEdge* he = dcel->CreateEdge(v1, v2);
+      new_edges.push_back(he);
+    }
+    
+    // Connect edges into a cycle
+    for (size_t i = 0; i < new_edges.size(); ++i) {
+      HalfEdge* he = new_edges[i];
+      HalfEdge* next_he = new_edges[(i + 1) % new_edges.size()];
+      dcel->ConnectHalfEdges(he, next_he);
+    }
+    
+    // Update face to point to new cycle
+    if (!new_edges.empty()) {
+      dcel->SetFaceOfCycle(new_edges[0], face);
+    }
   }
 }
 
@@ -194,7 +228,10 @@ VoronoiDiagramResult DCELVoronoi::ConvertDCELToResult(
   for (size_t i = 0; i < dcel->GetHalfEdgeCount(); ++i) {
     HalfEdge* he = dcel->GetHalfEdge(i);
     if (he && he->GetOrigin() && he->GetDestination()) {
-      if (he->GetId() < he->GetTwin()->GetId()) {
+      // Only add edge if it has a valid twin (to avoid duplicates)
+      // Or if it doesn't have a twin, add it anyway
+      HalfEdge* twin = he->GetTwin();
+      if (twin == nullptr || he->GetId() < twin->GetId()) {
         edge_set.emplace(
           he->GetOrigin()->GetCoordinates(),
           he->GetDestination()->GetCoordinates()

@@ -223,7 +223,7 @@ void VoronoiScene::GenerateVoronoi() {
       
       // Helper function to normalize edge direction (make it undirected)
       auto normalize_edge = [](const Edge2D& e) -> Edge2D {
-        if (e.p1 < e.p2 || (e.p1 == e.p2 && e.p2 < e.p1)) {
+        if (e.p1 < e.p2) {
           return e;
         } else {
           return Edge2D(e.p2, e.p1);

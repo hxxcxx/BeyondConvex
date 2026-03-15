@@ -80,16 +80,6 @@ class DivideConquerVoronoi : public IVoronoiAlgorithm {
   
  private:
   /**
-   * @brief Recursive divide and conquer function
-   * @param sites Sites to process (sorted by x-coordinate)
-   * @param bounds Bounding box
-   * @return DCEL structure
-   */
-  DCEL* DivideAndConquer(
-      const std::vector<Point2D>& sites,
-      const VoronoiBounds& bounds) const;
-  
-  /**
    * @brief Recursive divide and conquer function with depth tracking
    * @param sites Sites to process (sorted by x-coordinate)
    * @param bounds Bounding box
@@ -126,18 +116,25 @@ class DivideConquerVoronoi : public IVoronoiAlgorithm {
       std::vector<size_t>& out_face_to_site) const;
   
   /**
-   * @brief Clip faces by the dividing curve
+   * @brief Clip faces by the dividing curve using face-to-site mapping
    * @param dcel DCEL structure to modify
    * @param left_sites Sites in left diagram
    * @param right_sites Sites in right diagram
+   * @param all_sites Combined sites (left + right)
+   * @param face_to_site Mapping from face index to site index in all_sites
    */
   void ClipFacesByDividingCurve(
       DCEL* dcel,
       const std::vector<Point2D>& left_sites,
-      const std::vector<Point2D>& right_sites) const;
-  
+      const std::vector<Point2D>& right_sites,
+      const std::vector<Point2D>& all_sites,
+      const std::vector<size_t>& face_to_site) const;
+
   // Face-to-site mapping (stored during DCEL generation)
   mutable std::vector<size_t> face_to_site_mapping_;
+
+  // Sorted sites (stored during DCEL generation for correct index mapping)
+  mutable std::vector<Point2D> sorted_sites_;
 };
 
 }  // namespace geometry

@@ -234,7 +234,7 @@ VoronoiDiagramResult DCELHelper::ConvertDCELToResultWithMapping(
         Point2D p1 = v1->GetCoordinates();
         Point2D p2 = v2->GetCoordinates();
         // Normalize edge direction: always store with smaller point first
-        if (p2 < p1 || (p1 == p2 && p2 < p1)) {
+        if (p2 < p1) {
           std::swap(p1, p2);
         }
         edge_set.emplace(p1, p2);
@@ -344,7 +344,7 @@ VoronoiDiagramResult DCELHelper::ConvertDCELToResult(
         Point2D p1 = v1->GetCoordinates();
         Point2D p2 = v2->GetCoordinates();
         // Normalize edge direction: always store with smaller point first
-        if (p2 < p1 || (p1 == p2 && p2 < p1)) {
+        if (p2 < p1) {
           std::swap(p1, p2);
         }
         edge_set.emplace(p1, p2);
@@ -513,6 +513,59 @@ void DCELHelper::CopyFaces(
     Face* new_face = dst_dcel->CreateFace();
     dst_dcel->SetFaceOfCycle(new_edges[0], new_face);
     new_face->SetOuterComponent(new_edges[0]);
+  }
+}
+
+void DCELHelper::CopyFacesWithMapping(
+    DCEL* src_dcel,
+    DCEL* dst_dcel,
+    std::map<Point2D, Vertex*>& vertex_map,
+    const std::vector<size_t>& src_face_to_site,
+    size_t site_index_offset,
+    std::vector<size_t>& out_face_to_site) {
+
+  for (size_t i = 0; i < src_dcel->GetFaceCount(); ++i) {
+    Face* face = src_dcel->GetFace(i);
+    if (face == nullptr || face->IsUnbounded()) continue;
+
+    auto boundary_vertices = face->GetOuterBoundaryVertices();
+    if (boundary_vertices.size() < 3) continue;
+
+    // Create or get vertices
+    std::vector<Vertex*> new_vertices;
+    for (auto* v : boundary_vertices) {
+      Point2D p = v->GetCoordinates();
+      if (vertex_map.find(p) == vertex_map.end()) {
+        vertex_map[p] = dst_dcel->CreateVertex(p);
+      }
+      new_vertices.push_back(vertex_map[p]);
+    }
+
+    // Create edges
+    std::vector<HalfEdge*> new_edges;
+    for (size_t j = 0; j < new_vertices.size(); ++j) {
+      Vertex* v1 = new_vertices[j];
+      Vertex* v2 = new_vertices[(j + 1) % new_vertices.size()];
+      HalfEdge* he = dst_dcel->CreateEdge(v1, v2);
+      new_edges.push_back(he);
+    }
+
+    // Connect edges into a cycle
+    for (size_t j = 0; j < new_edges.size(); ++j) {
+      HalfEdge* he = new_edges[j];
+      HalfEdge* next_he = new_edges[(j + 1) % new_edges.size()];
+      dst_dcel->ConnectHalfEdges(he, next_he);
+    }
+
+    // Create face
+    Face* new_face = dst_dcel->CreateFace();
+    dst_dcel->SetFaceOfCycle(new_edges[0], new_face);
+    new_face->SetOuterComponent(new_edges[0]);
+
+    // Append the corresponding mapping entry (only for actually copied faces)
+    if (i < src_face_to_site.size()) {
+      out_face_to_site.push_back(src_face_to_site[i] + site_index_offset);
+    }
   }
 }
 

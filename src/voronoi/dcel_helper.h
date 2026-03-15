@@ -90,6 +90,28 @@ class DCELHelper {
       DCEL* src_dcel,
       DCEL* dst_dcel,
       std::map<Point2D, Vertex*>& vertex_map);
+
+  /**
+   * @brief Copy faces from one DCEL to another, filtering the face-to-site mapping
+   *
+   * Only copies valid faces (non-null, bounded, >= 3 vertices) and appends
+   * the corresponding mapping entries to out_face_to_site. This keeps the
+   * mapping in sync with the actual faces in the destination DCEL.
+   *
+   * @param src_dcel Source DCEL
+   * @param dst_dcel Destination DCEL
+   * @param vertex_map Map to track shared vertex pointers
+   * @param src_face_to_site Source face-to-site mapping (indexed by src face index)
+   * @param site_index_offset Value added to each site index (for right-side merges)
+   * @param out_face_to_site Output: mapping entries appended for each copied face
+   */
+  static void CopyFacesWithMapping(
+      DCEL* src_dcel,
+      DCEL* dst_dcel,
+      std::map<Point2D, Vertex*>& vertex_map,
+      const std::vector<size_t>& src_face_to_site,
+      size_t site_index_offset,
+      std::vector<size_t>& out_face_to_site);
   
   /**
    * @brief Clip a face by multiple half-planes

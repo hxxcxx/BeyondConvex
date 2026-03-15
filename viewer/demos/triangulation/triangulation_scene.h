@@ -48,7 +48,7 @@ class TriangulationScene : public GeometryScene {
   
   // Algorithm selection
   int selected_algorithm_;
-  std::vector<TriangulationAlgorithm> algorithms_;
+  std::vector<TriangulationAlgorithmType> algorithms_;
   
   // Canvas parameters
   float canvas_x_, canvas_y_, canvas_width_, canvas_height_;

@@ -3,27 +3,30 @@
 
 #include "triangulation_algorithm.h"
 #include "triangulation_types.h"
+#include "../dcel/dcel.h"
 #include <vector>
+#include <set>
+#include <map>
 
 namespace geometry {
 
 /**
- * @brief Delaunay triangulation algorithm
+ * @brief Delaunay triangulation algorithm using Bowyer-Watson
  * 
- * This algorithm computes the Delaunay triangulation of a point set,
- * which maximizes the minimum angle of all triangles and avoids
- * skinny triangles.
+ * This algorithm computes the Delaunay triangulation of a point set
+ * using the Bowyer-Watson incremental insertion algorithm with DCEL.
  * 
- * Time Complexity: O(n log n) average, O(n²) worst case
+ * Time Complexity: O(n²) worst case, O(n log n) average with randomization
  * Space Complexity: O(n)
  * 
  * Advantages:
  * - Produces high-quality triangulation
  * - Maximizes minimum angle
  * - Unique for generic point sets
+ * - Uses DCEL for efficient topology operations
  * 
  * Disadvantages:
- * - More complex implementation
+ * - O(n²) worst case without spatial indexing
  * - Requires careful numerical handling
  */
 class DelaunayTriangulation : public ITriangulationAlgorithm {
@@ -41,7 +44,7 @@ class DelaunayTriangulation : public ITriangulationAlgorithm {
    * @return Algorithm name
    */
   std::string Name() const override {
-    return "Delaunay";
+    return "Delaunay (Bowyer-Watson)";
   }
   
   /**
@@ -49,7 +52,7 @@ class DelaunayTriangulation : public ITriangulationAlgorithm {
    * @return Complexity string
    */
   std::string Complexity() const override {
-    return "O(n log n)";
+    return "O(n²) worst, O(n log n) avg";
   }
   
   /**
@@ -57,30 +60,93 @@ class DelaunayTriangulation : public ITriangulationAlgorithm {
    * @return Description
    */
   std::string Description() const override {
-    return "Delaunay triangulation for point sets. "
-           "Maximizes minimum angle and produces high-quality triangles. "
-           "Optimal for many applications including mesh generation.";
+    return "Delaunay triangulation using Bowyer-Watson algorithm with DCEL. "
+           "Incrementally inserts points and maintains empty circumcircle property. "
+           "Produces high-quality meshes optimal for many applications.";
   }
   
  private:
   /**
-   * @brief Check if triangle is Delaunay (empty circumcircle)
-   * @param tri Triangle to check
-   * @param points All points in triangulation
-   * @return True if Delaunay
+   * @brief Create super triangle that contains all points
+   * @param points Input points
+   * @param dcel DCEL structure
+   * @return Face of super triangle
    */
-  bool IsDelaunay(
-      const Triangle& tri,
-      const std::vector<Point2D>& points);
+  Face* CreateSuperTriangle(
+      const std::vector<Point2D>& points,
+      DCEL* dcel);
   
   /**
-   * @brief Flip edge to restore Delaunay property
-   * @param edge Edge to flip
-   * @param triangles Current triangulation
+   * @brief Find triangles whose circumcircle contains a point
+   * @param point Point to check
+   * @param dcel DCEL structure
+   * @return Set of bad triangles (faces)
    */
-  void FlipEdge(
-      Edge2D edge,
-      std::vector<Triangle>& triangles);
+  std::set<Face*> FindBadTriangles(
+      const Point2D& point,
+      DCEL* dcel);
+  
+  /**
+   * @brief Find boundary of bad triangles (polygon hole)
+   * @param bad_triangles Set of bad triangles
+   * @return Boundary edges (half-edges)
+   */
+  std::vector<HalfEdge*> FindBoundary(
+      const std::set<Face*>& bad_triangles);
+  
+  /**
+   * @brief Remove bad triangles from DCEL
+   * @param bad_triangles Set of bad triangles
+   * @param dcel DCEL structure
+   */
+  void RemoveBadTriangles(
+      const std::set<Face*>& bad_triangles,
+      DCEL* dcel);
+  
+  /**
+   * @brief Re-triangulate hole with new point
+   * @param boundary Boundary edges
+   * @param point New point
+   * @param dcel DCEL structure
+   */
+  void RetriangulateHole(
+      const std::vector<HalfEdge*>& boundary,
+      const Point2D& point,
+      DCEL* dcel);
+  
+  /**
+   * @brief Check if point is in circumcircle of triangle
+   * @param point Point to check
+   * @param face Triangle face
+   * @return True if point is in circumcircle
+   */
+  bool IsInCircumcircle(
+      const Point2D& point,
+      Face* face);
+  
+  /**
+   * @brief Get circumcenter of triangle face
+   * @param face Triangle face
+   * @return Circumcenter point
+   */
+  Point2D GetCircumcenter(Face* face);
+  
+  /**
+   * @brief Get circumradius of triangle face
+   * @param face Triangle face
+   * @return Circumradius
+   */
+  double GetCircumradius(Face* face);
+  
+  /**
+   * @brief Convert DCEL to TriangulationResult
+   * @param dcel DCEL structure
+   * @param super_triangle_face Super triangle face to exclude
+   * @return Triangulation result
+   */
+  TriangulationResult ConvertDCELToResult(
+      DCEL* dcel,
+      Face* super_triangle_face);
 };
 
 }  // namespace geometry

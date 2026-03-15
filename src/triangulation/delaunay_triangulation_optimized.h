@@ -27,6 +27,7 @@
 #include "delaunay_triangulation.h"
 #include "spatial_grid.h"
 #include <memory>
+#include <sstream>
 
 namespace geometry {
 

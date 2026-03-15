@@ -29,6 +29,7 @@
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
+#include <algorithm>
 
 namespace geometry {
 
@@ -96,7 +97,7 @@ class SpatialGrid {
     }
     
     // Get triangle vertices
-    HalfEdge* e0 = face->GetHalfEdge();
+    HalfEdge* e0 = face->GetOuterComponent();
     HalfEdge* e1 = e0->GetNext();
     HalfEdge* e2 = e1->GetNext();
     

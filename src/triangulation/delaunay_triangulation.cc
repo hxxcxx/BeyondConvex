@@ -321,7 +321,7 @@ std::vector<HalfEdge*> DelaunayTriangulation::FindBoundary(
   // - One bad triangle (inside the set)
   // - One non-bad triangle (outside the set)
   for (Face* face : bad_triangles) {
-    HalfEdge* start = face->GetHalfEdge();
+    HalfEdge* start = face->GetOuterComponent();
     HalfEdge* edge = start;
     
     // Traverse all edges of this triangle
@@ -552,7 +552,7 @@ Point2D DelaunayTriangulation::GetCircumcenter(Face* face) {
   
   // Extract the three vertices of the triangle
   // A face in DCEL is represented by a cycle of three half-edges
-  HalfEdge* e0 = face->GetHalfEdge();
+  HalfEdge* e0 = face->GetOuterComponent();
   HalfEdge* e1 = e0->GetNext();
   HalfEdge* e2 = e1->GetNext();
   
@@ -601,7 +601,7 @@ double DelaunayTriangulation::GetCircumradius(Face* face) {
   }
   
   // Extract the three vertices of the triangle
-  HalfEdge* e0 = face->GetHalfEdge();
+  HalfEdge* e0 = face->GetOuterComponent();
   HalfEdge* e1 = e0->GetNext();
   HalfEdge* e2 = e1->GetNext();
   
@@ -676,7 +676,7 @@ TriangulationResult DelaunayTriangulation::ConvertDCELToResult(
     if (face == super_triangle_face) continue;
     
     // Extract the three vertices of this triangle
-    HalfEdge* e0 = face->GetHalfEdge();
+    HalfEdge* e0 = face->GetOuterComponent();
     HalfEdge* e1 = e0->GetNext();
     HalfEdge* e2 = e1->GetNext();
     

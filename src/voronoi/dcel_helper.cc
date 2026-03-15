@@ -181,6 +181,118 @@ void DCELHelper::MergeSharedEdges(DCEL* dcel) {
   }
 }
 
+VoronoiDiagramResult DCELHelper::ConvertDCELToResultWithMapping(
+    const DCEL* dcel,
+    const std::vector<Point2D>& sites,
+    const std::vector<size_t>& face_to_site) {
+  
+  VoronoiDiagramResult result;
+  result.sites = sites;
+  
+  std::cout << "[ConvertDCELToResultWithMapping] Total faces: " << dcel->GetFaceCount() 
+            << ", mappings: " << face_to_site.size() << std::endl;
+  
+  // Collect vertices and edges from valid faces only
+  std::set<Point2D> vertex_set;
+  std::set<Edge2D> edge_set;
+  
+  size_t valid_face_count = 0;
+  size_t invalid_face_count = 0;
+  
+  for (size_t i = 0; i < dcel->GetFaceCount() && i < face_to_site.size(); ++i) {
+    Face* face = dcel->GetFace(i);
+    if (face == nullptr || face->IsUnbounded()) {
+      invalid_face_count++;
+      continue;
+    }
+    
+    // Get boundary vertices for this face
+    auto boundary_vertices = face->GetOuterBoundaryVertices();
+    
+    if (boundary_vertices.size() < 3) {
+      std::cout << "[ConvertDCELToResultWithMapping] Face " << i << " has only " 
+                << boundary_vertices.size() << " vertices, skipping" << std::endl;
+      invalid_face_count++;
+      continue;
+    }
+    
+    valid_face_count++;
+    
+    // Collect vertices
+    for (auto* v : boundary_vertices) {
+      if (v) {
+        vertex_set.insert(v->GetCoordinates());
+      }
+    }
+    
+    // Collect edges (normalize direction to make edges undirected)
+    for (size_t j = 0; j < boundary_vertices.size(); ++j) {
+      Vertex* v1 = boundary_vertices[j];
+      Vertex* v2 = boundary_vertices[(j + 1) % boundary_vertices.size()];
+      
+      if (v1 && v2) {
+        Point2D p1 = v1->GetCoordinates();
+        Point2D p2 = v2->GetCoordinates();
+        // Normalize edge direction: always store with smaller point first
+        if (p2 < p1 || (p1 == p2 && p2 < p1)) {
+          std::swap(p1, p2);
+        }
+        edge_set.emplace(p1, p2);
+      }
+    }
+  }
+  
+  std::cout << "[ConvertDCELToResultWithMapping] Valid faces: " << valid_face_count 
+            << ", Invalid faces: " << invalid_face_count << std::endl;
+  
+  // Convert sets to vectors
+  for (const auto& v : vertex_set) {
+    result.vertices.push_back(v);
+  }
+  
+  for (const auto& e : edge_set) {
+    result.edges.push_back(e);
+  }
+  
+  // Collect cells using explicit mapping
+  for (size_t i = 0; i < dcel->GetFaceCount() && i < face_to_site.size(); ++i) {
+    Face* face = dcel->GetFace(i);
+    if (face == nullptr || face->IsUnbounded()) continue;
+    
+    auto boundary_vertices = face->GetOuterBoundaryVertices();
+    if (boundary_vertices.size() < 3) continue;
+    
+    size_t site_index = face_to_site[i];
+    if (site_index >= sites.size()) {
+      std::cout << "[ConvertDCELToResultWithMapping] WARNING: Invalid site index " 
+                << site_index << " for face " << i << std::endl;
+      continue;
+    }
+    
+    VoronoiCell cell;
+    cell.site_index = site_index;
+    cell.site = sites[site_index];
+    
+    // Collect vertices
+    for (auto* v : boundary_vertices) {
+      cell.vertices.push_back(v->GetCoordinates());
+    }
+    
+    // Create edges
+    for (size_t j = 0; j < cell.vertices.size(); ++j) {
+      size_t next = (j + 1) % cell.vertices.size();
+      cell.edges.emplace_back(cell.vertices[j], cell.vertices[next]);
+    }
+    
+    result.cells.push_back(cell);
+  }
+  
+  std::cout << "[ConvertDCELToResultWithMapping] Generated " << result.cells.size() 
+            << " cells for " << sites.size() << " sites" << std::endl;
+  
+  return result;
+}
+
 VoronoiDiagramResult DCELHelper::ConvertDCELToResult(
     const DCEL* dcel,
     const std::vector<Point2D>& sites) {
@@ -223,13 +335,19 @@ VoronoiDiagramResult DCELHelper::ConvertDCELToResult(
       }
     }
     
-    // Collect edges
+    // Collect edges (normalize direction to make edges undirected)
     for (size_t j = 0; j < boundary_vertices.size(); ++j) {
       Vertex* v1 = boundary_vertices[j];
       Vertex* v2 = boundary_vertices[(j + 1) % boundary_vertices.size()];
       
       if (v1 && v2) {
-        edge_set.emplace(v1->GetCoordinates(), v2->GetCoordinates());
+        Point2D p1 = v1->GetCoordinates();
+        Point2D p2 = v2->GetCoordinates();
+        // Normalize edge direction: always store with smaller point first
+        if (p2 < p1 || (p1 == p2 && p2 < p1)) {
+          std::swap(p1, p2);
+        }
+        edge_set.emplace(p1, p2);
       }
     }
   }
@@ -246,7 +364,10 @@ VoronoiDiagramResult DCELHelper::ConvertDCELToResult(
     result.edges.push_back(e);
   }
   
-  // Collect cells
+  // Collect cells (one per site)
+  std::map<Point2D, VoronoiCell> site_to_cell;
+  std::map<Point2D, double> site_to_max_area;
+  
   for (size_t i = 0; i < dcel->GetFaceCount(); ++i) {
     Face* face = dcel->GetFace(i);
     if (face == nullptr || face->IsUnbounded()) continue;
@@ -254,15 +375,34 @@ VoronoiDiagramResult DCELHelper::ConvertDCELToResult(
     auto boundary_vertices = face->GetOuterBoundaryVertices();
     if (boundary_vertices.size() < 3) continue;
     
-    VoronoiCell cell;
-    
     // Find the closest site for this cell
     Point2D face_center = ComputeFaceCenter(face);
-    cell.site = FindClosestSite(face_center, sites);
+    Point2D closest_site = FindClosestSite(face_center, sites);
+    
+    // Calculate face area using shoelace formula
+    double area = 0.0;
+    for (size_t j = 0; j < boundary_vertices.size(); ++j) {
+      size_t next = (j + 1) % boundary_vertices.size();
+      const Point2D& p1 = boundary_vertices[j]->GetCoordinates();
+      const Point2D& p2 = boundary_vertices[next]->GetCoordinates();
+      area += (p1.x * p2.y - p2.x * p1.y);
+    }
+    area = std::abs(area) / 2.0;
+    
+    // Check if we already have a cell for this site with larger area
+    if (site_to_max_area.find(closest_site) != site_to_max_area.end()) {
+      if (site_to_max_area[closest_site] >= area) {
+        continue;  // Skip this face, existing cell has larger area
+      }
+    }
+    
+    // Create or update cell for this site
+    VoronoiCell cell;
+    cell.site = closest_site;
     
     // Find site index
     for (size_t j = 0; j < sites.size(); ++j) {
-      if (sites[j].x == cell.site.x && sites[j].y == cell.site.y) {
+      if (sites[j].x == closest_site.x && sites[j].y == closest_site.y) {
         cell.site_index = j;
         break;
       }
@@ -279,11 +419,35 @@ VoronoiDiagramResult DCELHelper::ConvertDCELToResult(
       cell.edges.emplace_back(cell.vertices[j], cell.vertices[next]);
     }
     
+    site_to_cell[closest_site] = cell;
+    site_to_max_area[closest_site] = area;
+  }
+  
+  // Convert map to vector
+  for (const auto& [site, cell] : site_to_cell) {
     result.cells.push_back(cell);
   }
   
   std::cout << "[ConvertDCELToResult] Generated " << result.cells.size() 
             << " cells for " << sites.size() << " sites" << std::endl;
+  
+  // Log which sites are missing
+  if (result.cells.size() < sites.size()) {
+    std::cout << "[ConvertDCELToResult] WARNING: Only " << result.cells.size() 
+              << " sites mapped, missing:" << std::endl;
+    for (const auto& site : sites) {
+      bool found = false;
+      for (const auto& cell : result.cells) {
+        if (cell.site.x == site.x && cell.site.y == site.y) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        std::cout << "  Missing site: (" << site.x << ", " << site.y << ")" << std::endl;
+      }
+    }
+  }
   
   // Check if multiple cells map to the same site
   std::map<Point2D, int> site_cell_count;
@@ -371,6 +535,8 @@ Face* DCELHelper::ClipFaceByMultipleHalfPlanes(
     if (result == nullptr) {
       std::cout << "      [ClipFaceByMultipleHalfPlanes] Face completely clipped away at step " 
                 << i << "/" << clip_points.size() << std::endl;
+      // Mark the original face as invalid by setting outer_component to nullptr
+      face->SetOuterComponent(nullptr);
       return nullptr;
     }
     

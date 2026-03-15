@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <algorithm>
+#include <set>
 
 namespace geometry {
 
@@ -197,6 +198,67 @@ void VoronoiScene::GenerateVoronoi() {
   
   // Generate Voronoi diagram with selected algorithm
   voronoi_result_ = Voronoi::Generate(sites_, current_algo, bounds);
+  
+  // If using Divide & Conquer, also run DCELVoronoi for comparison
+  if (current_algo == VoronoiAlgorithmType::kDivideConquer && !sites_.empty()) {
+    std::cout << "\n=== Comparing Divide & Conquer vs DCELVoronoi ===" << std::endl;
+    
+    VoronoiDiagramResult dcel_result = 
+        Voronoi::Generate(sites_, VoronoiAlgorithmType::kIncrementalDCEL, bounds);
+    
+    std::cout << "Divide & Conquer: " << voronoi_result_.CellCount() 
+              << " cells, " << voronoi_result_.EdgeCount() << " edges" << std::endl;
+    std::cout << "DCELVoronoi: " << dcel_result.CellCount() 
+              << " cells, " << dcel_result.EdgeCount() << " edges" << std::endl;
+    
+    // Check if cell counts match
+    if (voronoi_result_.CellCount() != dcel_result.CellCount()) {
+      std::cout << "WARNING: Cell count mismatch!" << std::endl;
+    }
+    
+    // Check if edge counts are similar
+    size_t edge_diff = std::abs((int)voronoi_result_.EdgeCount() - (int)dcel_result.EdgeCount());
+    if (edge_diff > 0) {
+      std::cout << "INFO: Edge count differs by " << edge_diff << std::endl;
+      
+      // Helper function to normalize edge direction (make it undirected)
+      auto normalize_edge = [](const Edge2D& e) -> Edge2D {
+        if (e.p1 < e.p2 || (e.p1 == e.p2 && e.p2 < e.p1)) {
+          return e;
+        } else {
+          return Edge2D(e.p2, e.p1);
+        }
+      };
+      
+      // Find edges in DCELVoronoi but not in Divide & Conquer
+      std::set<Edge2D> dc_edges;
+      for (const auto& e : voronoi_result_.edges) {
+        dc_edges.insert(normalize_edge(e));
+      }
+      std::set<Edge2D> dcel_edges_set;
+      for (const auto& e : dcel_result.edges) {
+        dcel_edges_set.insert(normalize_edge(e));
+      }
+      
+      std::cout << "Edges in DCELVoronoi but not in Divide & Conquer:" << std::endl;
+      for (const auto& e : dcel_edges_set) {
+        if (dc_edges.find(e) == dc_edges.end()) {
+          std::cout << "  Missing edge: (" << e.p1.x << "," << e.p1.y << ") -> (" 
+                    << e.p2.x << "," << e.p2.y << ")" << std::endl;
+        }
+      }
+      
+      std::cout << "Edges in Divide & Conquer but not in DCELVoronoi:" << std::endl;
+      for (const auto& e : dc_edges) {
+        if (dcel_edges_set.find(e) == dcel_edges_set.end()) {
+          std::cout << "  Extra edge: (" << e.p1.x << "," << e.p1.y << ") -> (" 
+                    << e.p2.x << "," << e.p2.y << ")" << std::endl;
+        }
+      }
+    }
+    
+    std::cout << "=== End comparison ===\n" << std::endl;
+  }
 }
 
 void VoronoiScene::Clear() {

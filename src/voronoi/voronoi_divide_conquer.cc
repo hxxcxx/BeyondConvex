@@ -1,5 +1,6 @@
 #include "voronoi_divide_conquer.h"
 #include "dcel_helper.h"
+#include "../dcel/dcel.h"
 #include <map>
 #include <set>
 #include <algorithm>
@@ -11,11 +12,20 @@ VoronoiDiagramResult DivideConquerVoronoi::Generate(
     const std::vector<Point2D>& sites,
     const VoronoiBounds& bounds) {
   
-  // Generate DCEL first, then convert
+  // Generate DCEL first (this also populates face_to_site_mapping_)
   DCEL* dcel = GenerateDCEL(sites, bounds);
-  VoronoiDiagramResult result = DCELHelper::ConvertDCELToResult(dcel, sites);
-  delete dcel;
   
+  // Convert using face-to-site mapping
+  VoronoiDiagramResult result;
+  if (face_to_site_mapping_.empty()) {
+    // Fallback to default conversion if mapping is not available
+    result = DCELHelper::ConvertDCELToResult(dcel, sites);
+  } else {
+    // Use explicit face-to-site mapping
+    result = DCELHelper::ConvertDCELToResultWithMapping(dcel, sites, face_to_site_mapping_);
+  }
+  
+  delete dcel;
   return result;
 }
 
@@ -32,6 +42,8 @@ DCEL* DivideConquerVoronoi::GenerateDCEL(
   if (sites.size() == 1) {
     // Single site: entire bounding box is one cell
     DCELHelper::CreateBoundingBoxCell(dcel, bounds);
+    face_to_site_mapping_.clear();
+    face_to_site_mapping_.push_back(0);
     return dcel;
   }
   
@@ -42,8 +54,10 @@ DCEL* DivideConquerVoronoi::GenerateDCEL(
         return a.x < b.x || (a.x == b.x && a.y < b.y);
       });
   
-  // Use divide and conquer
-  dcel = DivideAndConquer(sorted_sites, bounds);
+  // Use divide and conquer with face-to-site mapping
+  face_to_site_mapping_.clear();
+  delete dcel;
+  dcel = DivideAndConquerWithDepth(sorted_sites, bounds, 0, face_to_site_mapping_);
   
   return dcel;
 }
@@ -52,13 +66,15 @@ DCEL* DivideConquerVoronoi::DivideAndConquer(
     const std::vector<Point2D>& sites,
     const VoronoiBounds& bounds) const {
   
-  return DivideAndConquerWithDepth(sites, bounds, 0);
+  std::vector<size_t> face_to_site;
+  return DivideAndConquerWithDepth(sites, bounds, 0, face_to_site);
 }
 
 DCEL* DivideConquerVoronoi::DivideAndConquerWithDepth(
     const std::vector<Point2D>& sites,
     const VoronoiBounds& bounds,
-    int depth) const {
+    int depth,
+    std::vector<size_t>& face_to_site) const {
   
   std::string indent(depth * 2, ' ');
   std::cout << indent << "[DivideAndConquer] n=" << sites.size() << ", depth=" << depth << std::endl;
@@ -70,8 +86,8 @@ DCEL* DivideConquerVoronoi::DivideAndConquerWithDepth(
   // Base case: small number of sites, compute directly
   if (n == 1) {
     std::cout << indent << "[Base case n=1] Creating single cell" << std::endl;
-    // Single site: entire bounding box is one cell
     DCELHelper::CreateBoundingBoxCell(dcel, bounds);
+    face_to_site.push_back(0);  // First (and only) face corresponds to first site
     return dcel;
   }
   
@@ -85,6 +101,7 @@ DCEL* DivideConquerVoronoi::DivideAndConquerWithDepth(
     for (size_t i = 0; i < 2; ++i) {
       Face* cell = DCELHelper::CreateBoundingBoxCell(dcel, bounds);
       cells.push_back(cell);
+      face_to_site.push_back(i);  // Record site index for each face
     }
     
     // Clip each cell by the other site's bisector
@@ -115,6 +132,7 @@ DCEL* DivideConquerVoronoi::DivideAndConquerWithDepth(
     for (size_t i = 0; i < 3; ++i) {
       Face* cell = DCELHelper::CreateBoundingBoxCell(dcel, bounds);
       cells.push_back(cell);
+      face_to_site.push_back(i);  // Record site index for each face
     }
     
     // Clip each cell by the other sites' bisectors
@@ -156,14 +174,16 @@ DCEL* DivideConquerVoronoi::DivideAndConquerWithDepth(
   std::cout << std::endl;
   
   // Conquer: recursively compute Voronoi diagrams
-  DCEL* left_dcel = DivideAndConquerWithDepth(left_sites, bounds, depth + 1);
-  DCEL* right_dcel = DivideAndConquerWithDepth(right_sites, bounds, depth + 1);
+  std::vector<size_t> left_face_to_site, right_face_to_site;
+  DCEL* left_dcel = DivideAndConquerWithDepth(left_sites, bounds, depth + 1, left_face_to_site);
+  DCEL* right_dcel = DivideAndConquerWithDepth(right_sites, bounds, depth + 1, right_face_to_site);
   
   std::cout << indent << "[Conquer] Left faces=" << left_dcel->GetFaceCount() 
             << ", Right faces=" << right_dcel->GetFaceCount() << std::endl;
   
   // Merge: combine the two diagrams
-  dcel = MergeDiagrams(left_dcel, right_dcel, left_sites, right_sites, bounds);
+  dcel = MergeDiagrams(left_dcel, right_dcel, left_sites, right_sites, bounds, 
+                      left_face_to_site, right_face_to_site, face_to_site);
   
   std::cout << indent << "[Merge] Done, merged faces=" << dcel->GetFaceCount() << std::endl;
   
@@ -179,7 +199,10 @@ DCEL* DivideConquerVoronoi::MergeDiagrams(
     DCEL* right_dcel,
     const std::vector<Point2D>& left_sites,
     const std::vector<Point2D>& right_sites,
-    const VoronoiBounds& bounds) const {
+    const VoronoiBounds& bounds,
+    const std::vector<size_t>& left_face_to_site,
+    const std::vector<size_t>& right_face_to_site,
+    std::vector<size_t>& out_face_to_site) const {
   
   std::cout << "  [MergeDiagrams] Starting merge, left_faces=" << left_dcel->GetFaceCount()
             << ", right_faces=" << right_dcel->GetFaceCount() << std::endl;
@@ -193,9 +216,20 @@ DCEL* DivideConquerVoronoi::MergeDiagrams(
   DCELHelper::CopyFaces(left_dcel, merged_dcel, vertex_map);
   std::cout << "  [MergeDiagrams] Copied left faces, total=" << merged_dcel->GetFaceCount() << std::endl;
   
+  // Add left face-to-site mappings
+  for (size_t i = 0; i < left_face_to_site.size(); ++i) {
+    out_face_to_site.push_back(left_face_to_site[i]);
+  }
+  
   // Copy right diagram
+  size_t left_face_count = merged_dcel->GetFaceCount();
   DCELHelper::CopyFaces(right_dcel, merged_dcel, vertex_map);
   std::cout << "  [MergeDiagrams] Copied right faces, total=" << merged_dcel->GetFaceCount() << std::endl;
+  
+  // Add right face-to-site mappings (adjust site indices by left_sites.size())
+  for (size_t i = 0; i < right_face_to_site.size(); ++i) {
+    out_face_to_site.push_back(right_face_to_site[i] + left_sites.size());
+  }
   
   // Clip faces by dividing curve
   std::cout << "  [MergeDiagrams] Clipping faces by dividing curve..." << std::endl;
@@ -222,7 +256,9 @@ void DivideConquerVoronoi::ClipFacesByDividingCurve(
   std::vector<Point2D> all_sites = left_sites;
   all_sites.insert(all_sites.end(), right_sites.begin(), right_sites.end());
   
-  // For each face, determine which side it's on and clip accordingly
+  // First pass: determine which site each face should map to BEFORE clipping
+  std::map<Face*, Point2D> face_to_site;
+  
   for (size_t i = 0; i < dcel->GetFaceCount(); ++i) {
     Face* face = dcel->GetFace(i);
     if (face == nullptr || face->IsUnbounded()) continue;
@@ -230,16 +266,35 @@ void DivideConquerVoronoi::ClipFacesByDividingCurve(
     auto boundary_vertices = face->GetOuterBoundaryVertices();
     if (boundary_vertices.size() < 3) continue;
     
-    // Compute face center
+    // Compute face center BEFORE clipping
     Point2D face_center = DCELHelper::ComputeFaceCenter(face);
     
     // Find the closest site among ALL sites
     Point2D closest_site = DCELHelper::FindClosestSite(face_center, all_sites);
     
-    // Determine which side the closest site belongs to
+    // Store the mapping
+    face_to_site[face] = closest_site;
+  }
+  
+  // Second pass: clip faces based on their assigned site
+  for (size_t i = 0; i < dcel->GetFaceCount(); ++i) {
+    Face* face = dcel->GetFace(i);
+    if (face == nullptr || face->IsUnbounded()) continue;
+    
+    auto boundary_vertices = face->GetOuterBoundaryVertices();
+    if (boundary_vertices.size() < 3) continue;
+    
+    // Get the assigned site for this face
+    if (face_to_site.find(face) == face_to_site.end()) {
+      continue;  // Skip faces without assigned site
+    }
+    
+    Point2D assigned_site = face_to_site[face];
+    
+    // Determine which side the assigned site belongs to
     bool is_left_site = false;
     for (const auto& site : left_sites) {
-      if (site.x == closest_site.x && site.y == closest_site.y) {
+      if (site.x == assigned_site.x && site.y == assigned_site.y) {
         is_left_site = true;
         break;
       }
@@ -250,26 +305,24 @@ void DivideConquerVoronoi::ClipFacesByDividingCurve(
     std::vector<Vector2D> clip_normals;
     
     if (is_left_site) {
-      // Closest site is on left, clip by right sites
-      std::cout << "      [Face " << i << "] Center=(" << face_center.x << "," << face_center.y 
-                << "), closest is LEFT (" << closest_site.x << "," << closest_site.y 
+      // Assigned site is on left, clip by right sites
+      std::cout << "      [Face " << i << "] assigned to LEFT (" << assigned_site.x << "," << assigned_site.y 
                 << "), clipping by " << right_sites.size() << " right sites" << std::endl;
       for (const auto& site : right_sites) {
         Point2D midpoint;
         Vector2D normal;
-        HalfPlaneClipper::ComputeBisector(closest_site, site, midpoint, normal);
+        HalfPlaneClipper::ComputeBisector(assigned_site, site, midpoint, normal);
         clip_points.push_back(midpoint);
         clip_normals.push_back(normal);
       }
     } else {
-      // Closest site is on right, clip by left sites
-      std::cout << "      [Face " << i << "] Center=(" << face_center.x << "," << face_center.y 
-                << "), closest is RIGHT (" << closest_site.x << "," << closest_site.y 
+      // Assigned site is on right, clip by left sites
+      std::cout << "      [Face " << i << "] assigned to RIGHT (" << assigned_site.x << "," << assigned_site.y 
                 << "), clipping by " << left_sites.size() << " left sites" << std::endl;
       for (const auto& site : left_sites) {
         Point2D midpoint;
         Vector2D normal;
-        HalfPlaneClipper::ComputeBisector(closest_site, site, midpoint, normal);
+        HalfPlaneClipper::ComputeBisector(assigned_site, site, midpoint, normal);
         clip_points.push_back(midpoint);
         clip_normals.push_back(normal);
       }

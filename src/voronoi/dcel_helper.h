@@ -69,6 +69,18 @@ class DCELHelper {
       const std::vector<Point2D>& sites);
   
   /**
+   * @brief Convert DCEL to VoronoiDiagramResult with explicit face-site mapping
+   * @param dcel DCEL structure
+   * @param sites Original site points
+   * @param face_to_site Mapping from face index to site index
+   * @return Voronoi diagram result
+   */
+  static VoronoiDiagramResult ConvertDCELToResultWithMapping(
+      const DCEL* dcel,
+      const std::vector<Point2D>& sites,
+      const std::vector<size_t>& face_to_site);
+  
+  /**
    * @brief Copy all faces from one DCEL to another
    * @param src_dcel Source DCEL
    * @param dst_dcel Destination DCEL

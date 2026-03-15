@@ -94,12 +94,14 @@ class DivideConquerVoronoi : public IVoronoiAlgorithm {
    * @param sites Sites to process (sorted by x-coordinate)
    * @param bounds Bounding box
    * @param depth Recursion depth for debugging
+   * @param face_to_site Output mapping from face index to site index
    * @return DCEL structure
    */
   DCEL* DivideAndConquerWithDepth(
       const std::vector<Point2D>& sites,
       const VoronoiBounds& bounds,
-      int depth) const;
+      int depth,
+      std::vector<size_t>& face_to_site) const;
   
   /**
    * @brief Merge two Voronoi diagrams
@@ -108,6 +110,9 @@ class DivideConquerVoronoi : public IVoronoiAlgorithm {
    * @param left_sites Sites in left diagram
    * @param right_sites Sites in right diagram
    * @param bounds Bounding box
+   * @param left_face_to_site Face-to-site mapping for left diagram
+   * @param right_face_to_site Face-to-site mapping for right diagram
+   * @param out_face_to_site Output face-to-site mapping for merged diagram
    * @return Merged DCEL structure
    */
   DCEL* MergeDiagrams(
@@ -115,7 +120,10 @@ class DivideConquerVoronoi : public IVoronoiAlgorithm {
       DCEL* right_dcel,
       const std::vector<Point2D>& left_sites,
       const std::vector<Point2D>& right_sites,
-      const VoronoiBounds& bounds) const;
+      const VoronoiBounds& bounds,
+      const std::vector<size_t>& left_face_to_site,
+      const std::vector<size_t>& right_face_to_site,
+      std::vector<size_t>& out_face_to_site) const;
   
   /**
    * @brief Clip faces by the dividing curve
@@ -127,6 +135,9 @@ class DivideConquerVoronoi : public IVoronoiAlgorithm {
       DCEL* dcel,
       const std::vector<Point2D>& left_sites,
       const std::vector<Point2D>& right_sites) const;
+  
+  // Face-to-site mapping (stored during DCEL generation)
+  mutable std::vector<size_t> face_to_site_mapping_;
 };
 
 }  // namespace geometry

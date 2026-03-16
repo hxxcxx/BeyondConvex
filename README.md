@@ -1,24 +1,24 @@
-# BeyondConvex - Computational Geometry Library
+# BeyondConvex - 计算几何库
 
 <div align="center">
 
-A modern C++17 computational geometry library with interactive visualization using Dear ImGui.
+一个现代化的 C++17 计算几何库，使用 Dear ImGui 提供交互式可视化。
 
 [![C++17](https://img.shields.io/badge/C++-17-blue.svg)](https://en.cppreference.com/w/cpp/17)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)]()
 
-**Features:** Convex Hull • Intersection • Triangulation • Voronoi • DCEL
+**功能特性：** 凸包 • 交集 • 三角剖分 • Voronoi • DCEL
 
 </div>
 
-## Overview
+## 概述
 
-BeyondConvex is a comprehensive computational geometry library that implements fundamental algorithms with interactive visualization. It provides a clean, modern C++17 interface following the Google C++ Style Guide, making it ideal for learning, research, and practical applications.
+BeyondConvex 是一个全面的计算几何库，实现了基础算法并提供交互式可视化。它遵循 Google C++ 风格指南，提供干净、现代的 C++17 接口，非常适合学习、研究和实际应用。
 
-## Algorithm Summary
+## 算法概览
 
-| Category | Algorithm | Time Complexity | Space Complexity | Status |
+| 类别 | 算法 | 时间复杂度 | 空间复杂度 | 状态 |
 |----------|-----------|-----------------|------------------|--------|
 | **Convex Hull** | Jarvis March | O(nh) | O(n) | ✅ |
 | | Graham Scan | O(n log n) | O(n) | ✅ |
@@ -32,16 +32,16 @@ BeyondConvex is a comprehensive computational geometry library that implements f
 | **Voronoi** | Site-based | O(n²) | O(n²) | ✅ |
 | **Data Structure** | DCEL | - | O(V+E+F) | ✅ |
 
-## Features
+## 功能特性
 
-- ✅ Modern C++17 code following Google C++ Style Guide
-- ✅ Interactive ImGui-based visualization with 8 demo scenes
-- ✅ Modular architecture with facade pattern
-- ✅ Complete computational geometry algorithms suite
-- ✅ DCEL (Doubly Connected Edge List) data structure
-- ✅ Cross-platform support (Windows, Linux, macOS)
+- ✅ 遵循 Google C++ Style Guide 的现代 C++17 代码
+- ✅ 基于 ImGui 的交互式可视化，包含 8 个 demo scenes
+- ✅ 使用 Facade Pattern 的模块化架构
+- ✅ 完整的 computational geometry algorithms 套件
+- ✅ DCEL (Doubly Connected Edge List) 数据结构
+- ✅ 跨平台支持（Windows、Linux、macOS）
 
-## Project Structure
+## 项目结构
 
 ```
 BeyondConvex/
@@ -59,9 +59,11 @@ BeyondConvex/
 │   │   └── convex_hull_factory.h/cc  # Factory pattern
 │   ├── intersection/           # ✅ Intersection algorithms
 │   │   ├── line_segment_intersection.h/cc  # Bentley-Ottmann
-│   │   └── convex_polygon_intersection.h/cc  # Convex polygon
+│   │   └── convex_polygon_intersection.h/cc  # Convex polygon intersection
 │   ├── triangulation/          # ✅ Triangulation algorithms
-│   │   └── triangulation.h/cc  # Sweep line, Ear clipping, Delaunay
+│   │   ├── triangulation.h/cc  # Sweep line, Ear clipping, Delaunay
+│   │   ├── delaunay_triangulation.h/cc  # Delaunay (Bowyer-Watson)
+│   │   └── spatial_grid.h      # Spatial grid optimization
 │   ├── dcel/                   # ✅ DCEL data structure
 │   │   ├── dcel.h/cc           # Main DCEL class
 │   │   ├── vertex.h/cc         # Vertex records
@@ -96,20 +98,21 @@ BeyondConvex/
 │   ├── ear_clipping_triangulation.md
 │   ├── sweep_line_triangulation.md
 │   ├── convex_polygon_intersection.md
-│   └── library_export_architecture.md
+│   ├── delaunay_triangulation.md
+│   └── spatial_optimization.md
 └── third_party/               # External dependencies
     ├── glfw/                  # GLFW framework
     └── imgui/                 # Dear ImGui framework
 ```
 
-## Building
+## 构建说明
 
-### Requirements
+### 系统要求
 - CMake 3.15+
 - C++17 compatible compiler (MSVC, GCC, Clang)
 - OpenGL 3.0+
 
-### Build Steps
+### 构建步骤
 
 ```bash
 # Clone repository
@@ -128,9 +131,9 @@ cmake --build . --config Release
 
 ```
 
-## Usage
+## 使用方法
 
-### Running the Viewer
+### 运行查看器
 
 ```bash
 # Build the project
@@ -142,25 +145,25 @@ cmake --build . --config Release
 ./bin/Release/geometry_viewer      # Linux/macOS
 ```
 
-### Viewer Controls
+### 查看器控制
 
-- **Scenes Menu** (top menu bar): Switch between 8 different algorithm demonstrations
-- **Scene Control** (left panel): Select scene and reset
-- **Scene Info** (left panel): View scene details and adjust parameters
-- **Canvas** (right panel): Click to add points and visualize algorithms
+- **Scenes Menu** (top menu bar): 在 8 个不同的 algorithm demonstrations 之间切换
+- **Scene Control** (left panel): 选择 scene 和 reset
+- **Scene Info** (left panel): 查看 scene details 和调整 parameters
+- **Canvas** (right panel): 点击添加 points 并可视化 algorithms
 
-### Available Demo Scenes
+### 可用的演示场景
 
-1. **To-Left Test** - Interactive geometric predicate testing
-2. **Incremental Construction** - Step-by-step convex hull building
-3. **Convex Hull** - Compare three convex hull algorithms
+1. **To-Left Test** - 交互式 geometric predicate testing
+2. **Incremental Construction** - 逐步构建 convex hull
+3. **Convex Hull** - 比较三种 convex hull algorithms
 4. **Line Segment Intersection** - Bentley-Ottmann sweep line visualization
 5. **Convex Polygon Intersection** - Polygon intersection algorithms
 6. **Triangulation** - Sweep line, ear clipping, and Delaunay methods
-7. **Voronoi Diagram** - Voronoi cell generation from sites
+7. **Voronoi Diagram** - 从 sites 生成 Voronoi cells
 8. **DCEL Test** - Doubly Connected Edge List data structure
 
-### Code Example
+### 代码示例
 
 ```cpp
 #include "geometry_utils.h"
@@ -206,69 +209,69 @@ Point2D p(0.0, 0.0), q(1.0, 0.0), r(0.5, 0.5);
 bool is_left = GeometryUtils::ToLeftTest(p, q, r);  // true
 ```
 
-## Learning Path
+## 学习路径
 
-### ✅ Stage 1: Foundation (Complete)
+### ✅ Stage 1: Foundation (已完成)
 - Point2D, Vector2D, Edge2D classes
 - To-Left Test (fundamental geometric predicate)
-- Facade pattern architecture (GeometryUtils/GeometryCore)
+- Facade Pattern architecture (GeometryUtils/GeometryCore)
 - ImGui visualization setup
 
-### ✅ Stage 2: Convex Hull (Complete)
-- **Jarvis March** (Gift Wrapping) - O(nh)
+### ✅ Stage 2: Convex Hull (已完成)
+- **Jarvis March** - O(nh)
 - **Graham Scan** - O(n log n)
-- **Monotone Chain** - O(n log n) ⭐ Recommended
-- Factory pattern for algorithm selection
-- Interactive visualization scenes (3 demos)
+- **Monotone Chain** - O(n log n) ⭐ 推荐
+- Factory Pattern for algorithm selection
+- 交互式 visualization scenes (3 demos)
 
-### ✅ Stage 3: Intersection (Complete)
+### ✅ Stage 3: Intersection (已完成)
 - **Line Segment Intersection** - Bentley-Ottmann O((n+k) log n)
 - **Convex Polygon Intersection** - Linear Scan O(n+m) & Binary Search O(log n+log m)
-- Interactive visualization scenes (2 demos)
+- 交互式 visualization scenes (2 demos)
 
-### ✅ Stage 4: Triangulation (Complete)
+### ✅ Stage 4: Triangulation (已完成)
 - **Sweep Line Triangulation** - Top-to-bottom approach
 - **Ear Clipping Method** - O(n²) for simple polygons
 - **Delaunay Triangulation** - Empty circumcircle property
-- Interactive visualization scene (1 demo)
+- 交互式 visualization scene (1 demo)
 
-### ✅ Stage 5: Voronoi Diagrams (Complete)
+### ✅ Stage 5: Voronoi Diagrams (已完成)
 - **Voronoi Diagram Generation** - Site-based cell construction
 - Relationship with Delaunay triangulation (dual graphs)
-- Interactive visualization scene (1 demo)
+- 交互式 visualization scene (1 demo)
 
-### ✅ Stage 6: DCEL Data Structure (Complete)
+### ✅ Stage 6: DCEL Data Structure (已完成)
 - **DCEL Implementation** - Vertex, HalfEdge, Face records
 - **DCEL Builder** - Construct planar subdivisions
-- Interactive test scene (1 demo)
+- 交互式 test scene (1 demo)
 
 ### 📋 Future Enhancements
 - Fortune's sweep line algorithm for Voronoi (O(n log n))
 - Half-plane intersection
 - Circle-line intersection
-- More geometric predicates
+- 更多 geometric predicates
 
-## Dependencies
+## 依赖项
 
 - **GLFW** - Window and input management (auto-downloaded by CMake)
 - **OpenGL** - Graphics rendering
 - **Dear ImGui** - Immediate mode GUI framework (included in third_party)
 
-## Current Status
+## 当前状态
 
-### ✅ Completed (All Major Features)
+### ✅ 已完成（所有主要功能）
 
 **Core Infrastructure:**
 - ✅ Modern C++17 project with CMake build system
 - ✅ Point2D, Vector2D, Edge2D geometric primitives
-- ✅ Facade pattern architecture (GeometryUtils/GeometryCore)
+- ✅ Facade Pattern architecture (GeometryUtils/GeometryCore)
 - ✅ Google C++ Style Guide compliance
 
 **Convex Hull Algorithms:**
-- ✅ Jarvis March (Gift Wrapping) - O(nh)
+- ✅ Jarvis March - O(nh)
 - ✅ Graham Scan - O(n log n)
 - ✅ Monotone Chain - O(n log n)
-- ✅ Factory pattern for algorithm selection
+- ✅ Factory Pattern for algorithm selection
 - ✅ Area, perimeter, and point-in-polygon tests
 
 **Intersection Algorithms:**
@@ -296,7 +299,7 @@ bool is_left = GeometryUtils::ToLeftTest(p, q, r);  // true
 - ✅ Scene management system
 
 **Documentation:**
-- ✅ 8 comprehensive documentation files (algorithms, data structures, architecture)
+- ✅ 8 comprehensive documentation files (algorithms, data structures)
 - ✅ Code examples and usage patterns
 - ✅ Architecture design documents
 
@@ -310,7 +313,7 @@ bool is_left = GeometryUtils::ToLeftTest(p, q, r);  // true
 - Additional geometric predicates
 - Performance optimizations and benchmarks
 
-## Documentation
+## 文档
 
 ### Algorithm Documentation
 - [Convex Hull Algorithms Comparison](docs/convex_hull_algorithms.md) - Jarvis March, Graham Scan, Monotone Chain
@@ -319,30 +322,29 @@ bool is_left = GeometryUtils::ToLeftTest(p, q, r);  // true
 - [Ear Clipping Triangulation](docs/ear_clipping_triangulation.md) - Polygon triangulation algorithm
 - [Sweep Line Triangulation](docs/sweep_line_triangulation.md) - Top-to-bottom triangulation approach
 - [Convex Polygon Intersection](docs/convex_polygon_intersection.md) - Linear scan and binary search methods
+- [Delaunay Triangulation](docs/delaunay_triangulation.md) - Bowyer-Watson algorithm with spatial optimization
+- [Spatial Grid Optimization](docs/spatial_optimization.md) - Bucket-based acceleration for Delaunay
 
 ### Data Structure Documentation
-- [DCEL Data Structure](docs/dcel_data_structure.md) - Doubly Connected Edge List (双向连接边表)
+- [DCEL Data Structure](docs/dcel_data_structure.md) - Doubly Connected Edge List
 
-### Architecture Documentation
-- [Library Export Architecture](docs/library_export_architecture.md) - Facade pattern design documentation
+## 代码风格
 
-## Code Style
-
-This project follows **Google C++ Style Guide**:
+本项目遵循 **Google C++ Style Guide**：
 - File naming: `snake_case.cc` and `snake_case.h`
 - Class naming: `PascalCase`
 - Function naming: `PascalCase`
 - Member variables: `snake_case_` (with trailing underscore)
 
-## Project Statistics
+## 项目统计
 
 - **Total Lines of Code:** ~5,000+
 - **Core Algorithms:** 10+ implementations
 - **Demo Scenes:** 8 interactive visualizations
-- **Documentation Files:** 8 comprehensive guides
+- **Documentation Files:** 10 comprehensive guides
 - **Supported Platforms:** Windows, Linux, macOS
 
-## License
+## 许可证
 
 MIT License - Feel free to use for learning and projects.
 

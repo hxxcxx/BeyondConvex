@@ -14,7 +14,15 @@
 
 ## 概述
 
-BeyondConvex 是一个全面的计算几何库，实现了基础算法并提供交互式可视化。它遵循 Google C++ 风格指南，提供干净、现代的 C++17 接口，非常适合学习、研究和实际应用。
+BeyondConvex 通过学习优质计算几何资源（邓俊辉教授课程、B站教程），结合 AI 辅助编程工具（VS Code Copilot + GLM 4.7）完成开发。
+
+## 学习资源
+
+### 视频教程
+- **[德劳内三角形生成算法 Delaunay triangle generation algorithm（I）](https://www.bilibili.com/video/BV1QB4y1S7RK/?share_source=copy_web&vd_source=6ebb0754dc3f18fc0e61fca680a38c61)** - B站视频教程
+
+### 在线课程
+- **[计算几何（邓俊辉）](https://www.xuetangx.com/course/thu08091000327intl/3995175?channel=i.area.learn_title)** - 清华大学邓俊辉教授的计算几何课程
 
 ## 算法概览
 
@@ -229,21 +237,21 @@ bool is_left = GeometryUtils::ToLeftTest(p, q, r);  // true
 - **Convex Polygon Intersection** - Linear Scan O(n+m) & Binary Search O(log n+log m)
 - 交互式 visualization scenes (2 demos)
 
-### ✅ Stage 4: Triangulation (已完成)
+### ✅ Stage 4: DCEL Data Structure (已完成)
+- **DCEL Implementation** - Vertex, HalfEdge, Face records
+- **DCEL Builder** - Construct planar subdivisions
+- 交互式 test scene (1 demo)
+
+### ✅ Stage 5: Triangulation (已完成)
 - **Sweep Line Triangulation** - Top-to-bottom approach
 - **Ear Clipping Method** - O(n²) for simple polygons
 - **Delaunay Triangulation** - Empty circumcircle property
 - 交互式 visualization scene (1 demo)
 
-### ✅ Stage 5: Voronoi Diagrams (已完成)
+### ✅ Stage 6: Voronoi Diagrams (已完成)
 - **Voronoi Diagram Generation** - Site-based cell construction
 - Relationship with Delaunay triangulation (dual graphs)
 - 交互式 visualization scene (1 demo)
-
-### ✅ Stage 6: DCEL Data Structure (已完成)
-- **DCEL Implementation** - Vertex, HalfEdge, Face records
-- **DCEL Builder** - Construct planar subdivisions
-- 交互式 test scene (1 demo)
 
 ### 📋 Future Enhancements
 - Fortune's sweep line algorithm for Voronoi (O(n log n))
@@ -336,24 +344,8 @@ bool is_left = GeometryUtils::ToLeftTest(p, q, r);  // true
 - Function naming: `PascalCase`
 - Member variables: `snake_case_` (with trailing underscore)
 
-## 项目统计
-
-- **Total Lines of Code:** ~5,000+
-- **Core Algorithms:** 10+ implementations
-- **Demo Scenes:** 8 interactive visualizations
-- **Documentation Files:** 10 comprehensive guides
-- **Supported Platforms:** Windows, Linux, macOS
-
 ## 许可证
 
 MIT License - Feel free to use for learning and projects.
 
 ---
-
-<div align="center">
-
-**Built with ❤️ for the computational geometry community**
-
-[Report Bug](../../issues) · [Request Feature](../../issues)
-
-</div>

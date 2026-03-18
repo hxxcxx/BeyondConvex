@@ -2,7 +2,7 @@
 #define GEOMETRY_SPATIAL_INDEX_KDTREE_KDTREE_NODE_H_
 
 #include "../../core/point2d.h"
-#include "../quadtree/quadtree_node.h"  // For BoundingBox
+#include "../spatial_index_common.h"
 #include <memory>
 #include <vector>
 

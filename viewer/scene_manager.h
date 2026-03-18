@@ -1,6 +1,5 @@
-#ifndef VIEWER_SCENE_MANAGER_H_
-#define VIEWER_SCENE_MANAGER_H_
 
+#pragma once
 #include "demos/scene_base.h"
 #include "demos/convex_hull/to_left_test_scene.h"
 #include "demos/convex_hull/incremental_construction_scene.h"
@@ -60,4 +59,3 @@ class SceneManager {
 
 }  // namespace geometry
 
-#endif  // VIEWER_SCENE_MANAGER_H_

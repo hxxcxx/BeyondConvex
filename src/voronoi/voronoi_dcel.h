@@ -1,6 +1,5 @@
-#ifndef GEOMETRY_VORONOI_DCEL_H_
-#define GEOMETRY_VORONOI_DCEL_H_
 
+#pragma once
 #include "voronoi_algorithm.h"
 #include "dcel_helper.h"
 #include "../dcel/dcel.h"
@@ -95,4 +94,3 @@ class DCELVoronoi : public IVoronoiAlgorithm {
 
 }  // namespace geometry
 
-#endif  // GEOMETRY_VORONOI_DCEL_H_

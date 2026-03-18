@@ -1,6 +1,5 @@
-#ifndef GEOMETRY_HALF_PLANE_CLIPPER_H_
-#define GEOMETRY_HALF_PLANE_CLIPPER_H_
 
+#pragma once
 #include "../core/point2d.h"
 #include "../core/vector2d.h"
 #include <vector>
@@ -95,4 +94,3 @@ class HalfPlaneClipper {
 
 }  // namespace geometry
 
-#endif  // GEOMETRY_HALF_PLANE_CLIPPER_H_

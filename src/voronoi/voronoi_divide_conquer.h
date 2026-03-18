@@ -1,6 +1,5 @@
-#ifndef GEOMETRY_VORONOI_DIVIDE_CONQUER_H_
-#define GEOMETRY_VORONOI_DIVIDE_CONQUER_H_
 
+#pragma once
 #include "voronoi_algorithm.h"
 #include "half_plane_clipper.h"
 #include "../dcel/dcel.h"
@@ -139,4 +138,3 @@ class DivideConquerVoronoi : public IVoronoiAlgorithm {
 
 }  // namespace geometry
 
-#endif  // GEOMETRY_VORONOI_DIVIDE_CONQUER_H_

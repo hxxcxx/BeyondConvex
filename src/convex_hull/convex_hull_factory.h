@@ -1,6 +1,5 @@
-#ifndef GEOMETRY_CORE_CONVEX_HULL_FACTORY_H_
-#define GEOMETRY_CORE_CONVEX_HULL_FACTORY_H_
 
+#pragma once
 #include "convex_hull/convex_hull.h"
 #include "../core/point2d.h"
 #include <vector>
@@ -65,4 +64,3 @@ class ConvexHullFactory {
 
 }  // namespace geometry
 
-#endif  // GEOMETRY_CORE_CONVEX_HULL_FACTORY_H_

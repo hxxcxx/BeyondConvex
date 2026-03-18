@@ -1,6 +1,5 @@
-#ifndef GEOMETRY_TRIANGULATION_DELAUNAY_H_
-#define GEOMETRY_TRIANGULATION_DELAUNAY_H_
 
+#pragma once
 #include "triangulation_algorithm.h"
 #include "triangulation_types.h"
 #include "../dcel/dcel.h"
@@ -151,4 +150,3 @@ class DelaunayTriangulation : public ITriangulationAlgorithm {
 
 }  // namespace geometry
 
-#endif  // GEOMETRY_TRIANGULATION_DELAUNAY_H_

@@ -1,6 +1,5 @@
-#ifndef GEOMETRY_CORE_EDGE2D_H_
-#define GEOMETRY_CORE_EDGE2D_H_
 
+#pragma once
 #include "point2d.h"
 #include "vector2d.h"
 #include <cmath>
@@ -91,4 +90,3 @@ class Edge2D {
 
 }  // namespace geometry
 
-#endif  // GEOMETRY_CORE_EDGE2D_H_

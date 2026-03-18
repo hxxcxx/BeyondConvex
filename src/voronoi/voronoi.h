@@ -1,6 +1,5 @@
-#ifndef GEOMETRY_VORONOI_H_
-#define GEOMETRY_VORONOI_H_
 
+#pragma once
 #include "voronoi_types.h"
 #include "voronoi_algorithm.h"
 #include "../dcel/dcel.h"
@@ -132,4 +131,3 @@ class [[deprecated("Use Voronoi class instead")]] VoronoiDiagram {
 
 }  // namespace geometry
 
-#endif  // GEOMETRY_VORONOI_H_

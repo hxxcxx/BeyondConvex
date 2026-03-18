@@ -1,6 +1,5 @@
-#ifndef VIEWER_DEMOS_INTERSECTION_LINE_SEGMENT_INTERSECTION_SCENE_H_
-#define VIEWER_DEMOS_INTERSECTION_LINE_SEGMENT_INTERSECTION_SCENE_H_
 
+#pragma once
 #include "../scene_base.h"
 #include "../../../src/core/point2d.h"
 #include "../../../src/core/edge2d.h"
@@ -71,4 +70,3 @@ class LineSegmentIntersectionScene : public GeometryScene {
 
 }  // namespace geometry
 
-#endif  // VIEWER_DEMOS_INTERSECTION_LINE_SEGMENT_INTERSECTION_SCENE_H_

@@ -1,6 +1,5 @@
-#ifndef GEOMETRY_TRIANGULATION_EAR_CLIPPING_H_
-#define GEOMETRY_TRIANGULATION_EAR_CLIPPING_H_
 
+#pragma once
 #include "triangulation_algorithm.h"
 #include "triangulation_types.h"
 #include <vector>
@@ -80,4 +79,3 @@ class EarClippingTriangulation : public ITriangulationAlgorithm {
 
 }  // namespace geometry
 
-#endif  // GEOMETRY_TRIANGULATION_EAR_CLIPPING_H_

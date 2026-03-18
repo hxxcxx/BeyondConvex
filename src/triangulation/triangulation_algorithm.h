@@ -1,6 +1,5 @@
-#ifndef GEOMETRY_TRIANGULATION_ALGORITHM_H_
-#define GEOMETRY_TRIANGULATION_ALGORITHM_H_
 
+#pragma once
 #include "triangulation_types.h"
 #include <vector>
 #include <memory>
@@ -47,4 +46,3 @@ class ITriangulationAlgorithm {
 
 }  // namespace geometry
 
-#endif  // GEOMETRY_TRIANGULATION_ALGORITHM_H_

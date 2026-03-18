@@ -1,6 +1,5 @@
-#ifndef VIEWER_VORONOI_SCENE_H_
-#define VIEWER_VORONOI_SCENE_H_
 
+#pragma once
 #include "../scene_base.h"
 #include "voronoi/voronoi.h"
 #include <vector>
@@ -57,4 +56,3 @@ class VoronoiScene : public GeometryScene {
 
 }  // namespace geometry
 
-#endif  // VIEWER_VORONOI_SCENE_H_

@@ -1,6 +1,5 @@
-#ifndef GEOMETRY_CORE_CONVEX_HULL_H_
-#define GEOMETRY_CORE_CONVEX_HULL_H_
 
+#pragma once
 #include "../core/point2d.h"
 #include "../core/edge2d.h"
 #include <vector>
@@ -60,4 +59,3 @@ class ConvexHull {
 
 }  // namespace geometry
 
-#endif  // GEOMETRY_CORE_CONVEX_HULL_H_

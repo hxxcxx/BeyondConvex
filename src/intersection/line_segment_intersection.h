@@ -1,6 +1,5 @@
-#ifndef GEOMETRY_INTERSECTION_LINE_SEGMENT_INTERSECTION_H_
-#define GEOMETRY_INTERSECTION_LINE_SEGMENT_INTERSECTION_H_
 
+#pragma once
 #include "../core/point2d.h"
 #include "../core/edge2d.h"
 #include <vector>
@@ -85,4 +84,3 @@ class LineSegmentIntersection {
 
 }  // namespace geometry
 
-#endif  // GEOMETRY_INTERSECTION_LINE_SEGMENT_INTERSECTION_H_

@@ -1,6 +1,5 @@
-#ifndef GEOMETRY_VORONOI_INCREMENTAL_H_
-#define GEOMETRY_VORONOI_INCREMENTAL_H_
 
+#pragma once
 #include "voronoi_algorithm.h"
 #include "half_plane_clipper.h"
 #include <set>
@@ -99,4 +98,3 @@ class IncrementalVoronoi : public IVoronoiAlgorithm {
 
 }  // namespace geometry
 
-#endif  // GEOMETRY_VORONOI_INCREMENTAL_H_

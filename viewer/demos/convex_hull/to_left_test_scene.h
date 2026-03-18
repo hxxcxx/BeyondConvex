@@ -1,6 +1,5 @@
-#ifndef VIEWER_DEMOS_TO_LEFT_TEST_SCENE_H_
-#define VIEWER_DEMOS_TO_LEFT_TEST_SCENE_H_
 
+#pragma once
 #include "../scene_base.h"
 #include "core/point2d.h"
 #include <vector>
@@ -39,4 +38,3 @@ class ToLeftTestScene : public GeometryScene {
 
 }  // namespace geometry
 
-#endif  // VIEWER_DEMOS_TO_LEFT_TEST_SCENE_H_

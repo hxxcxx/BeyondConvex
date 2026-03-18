@@ -1,3 +1,4 @@
+#pragma once
 /**
  * @file delaunay_triangulation_optimized.h
  * @brief Optimized Delaunay triangulation using spatial grid (buckets)

@@ -1,6 +1,5 @@
-#ifndef GEOMETRY_TRIANGULATION_TYPES_H_
-#define GEOMETRY_TRIANGULATION_TYPES_H_
 
+#pragma once
 #include "../core/point2d.h"
 #include "../core/vector2d.h"
 #include "../core/edge2d.h"
@@ -113,4 +112,3 @@ enum class TriangulationAlgorithmType {
 
 }  // namespace geometry
 
-#endif  // GEOMETRY_TRIANGULATION_TYPES_H_

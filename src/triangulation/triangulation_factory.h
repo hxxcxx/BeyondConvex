@@ -1,6 +1,5 @@
-#ifndef GEOMETRY_TRIANGULATION_FACTORY_H_
-#define GEOMETRY_TRIANGULATION_FACTORY_H_
 
+#pragma once
 #include "triangulation_types.h"
 #include "triangulation_algorithm.h"
 #include <vector>
@@ -54,4 +53,3 @@ class TriangulationFactory {
 
 }  // namespace geometry
 
-#endif  // GEOMETRY_TRIANGULATION_FACTORY_H_

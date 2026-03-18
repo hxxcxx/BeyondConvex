@@ -1,3 +1,4 @@
+#pragma once
 /**
  * @file spatial_grid.h
  * @brief Spatial grid (bucket) data structure for accelerating Delaunay triangulation

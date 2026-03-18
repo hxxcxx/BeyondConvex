@@ -1,6 +1,5 @@
-#ifndef VIEWER_DEMOS_SCENE_BASE_H_
-#define VIEWER_DEMOS_SCENE_BASE_H_
 
+#pragma once
 #include <string>
 #include <vector>
 #include "core/point2d.h"
@@ -50,4 +49,3 @@ class GeometryScene {
 
 }  // namespace geometry
 
-#endif  // VIEWER_DEMOS_SCENE_BASE_H_

@@ -1,6 +1,5 @@
-#ifndef VIEWER_CONVEX_POLYGON_INTERSECTION_SCENE_H_
-#define VIEWER_CONVEX_POLYGON_INTERSECTION_SCENE_H_
 
+#pragma once
 #include "../scene_base.h"
 #include "../../../src/intersection/convex_polygon_intersection.h"
 #include "../../../src/convex_hull/convex_hull_factory.h"
@@ -81,4 +80,3 @@ class ConvexPolygonIntersectionScene : public GeometryScene {
 
 }  // namespace geometry
 
-#endif  // VIEWER_CONVEX_POLYGON_INTERSECTION_SCENE_H_

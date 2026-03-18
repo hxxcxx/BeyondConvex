@@ -1,6 +1,5 @@
-#ifndef GEOMETRY_VORONOI_DIAGRAM_H_
-#define GEOMETRY_VORONOI_DIAGRAM_H_
 
+#pragma once
 #include "../core/point2d.h"
 #include "../core/edge2d.h"
 #include "../core/vector2d.h"
@@ -239,4 +238,3 @@ class IncrementalDCELAlgorithm : public IVoronoiAlgorithm {
 
 }  // namespace geometry
 
-#endif  // GEOMETRY_VORONOI_DIAGRAM_H_

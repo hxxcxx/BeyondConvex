@@ -1,6 +1,5 @@
-#ifndef VIEWER_DEMOS_SPATIAL_INDEX_QUADTREE_SCENE_H_
-#define VIEWER_DEMOS_SPATIAL_INDEX_QUADTREE_SCENE_H_
 
+#pragma once
 #include "../scene_base.h"
 #include "../../../src/spatial_index/quadtree/quadtree.h"
 #include <vector>
@@ -98,4 +97,3 @@ class QuadtreeScene : public GeometryScene {
 
 }  // namespace geometry
 
-#endif  // VIEWER_DEMOS_SPATIAL_INDEX_QUADTREE_SCENE_H_

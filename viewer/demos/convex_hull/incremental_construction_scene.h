@@ -1,6 +1,5 @@
-#ifndef VIEWER_DEMOS_INCREMENTAL_CONSTRUCTION_SCENE_H_
-#define VIEWER_DEMOS_INCREMENTAL_CONSTRUCTION_SCENE_H_
 
+#pragma once
 #include "../scene_base.h"
 #include "../../../src/core/point2d.h"
 #include "../../../src/convex_hull/convex_hull.h"
@@ -51,4 +50,3 @@ class IncrementalConstructionScene : public GeometryScene {
 
 }  // namespace geometry
 
-#endif  // VIEWER_DEMOS_INCREMENTAL_CONSTRUCTION_SCENE_H_

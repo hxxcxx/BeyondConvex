@@ -1,6 +1,5 @@
-#ifndef GEOMETRY_CORE_POINT2D_H_
-#define GEOMETRY_CORE_POINT2D_H_
 
+#pragma once
 #include "vector2d.h"
 #include <cmath>
 #include <iostream>
@@ -61,4 +60,3 @@ class Point2D {
 
 }  // namespace geometry
 
-#endif  // GEOMETRY_CORE_POINT2D_H_

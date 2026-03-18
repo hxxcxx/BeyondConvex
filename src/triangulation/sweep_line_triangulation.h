@@ -1,6 +1,5 @@
-#ifndef GEOMETRY_TRIANGULATION_SWEEP_LINE_H_
-#define GEOMETRY_TRIANGULATION_SWEEP_LINE_H_
 
+#pragma once
 #include "triangulation_algorithm.h"
 #include "triangulation_types.h"
 #include <vector>
@@ -72,4 +71,3 @@ class SweepLineTriangulation : public ITriangulationAlgorithm {
 
 }  // namespace geometry
 
-#endif  // GEOMETRY_TRIANGULATION_SWEEP_LINE_H_

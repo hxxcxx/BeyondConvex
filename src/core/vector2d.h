@@ -1,6 +1,5 @@
-#ifndef GEOMETRY_CORE_VECTOR2D_H_
-#define GEOMETRY_CORE_VECTOR2D_H_
 
+#pragma once
 #include <cmath>
 #include <iostream>
 
@@ -88,4 +87,3 @@ class Vector2D {
 
 }  // namespace geometry
 
-#endif  // GEOMETRY_CORE_VECTOR2D_H_

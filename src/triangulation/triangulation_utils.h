@@ -1,6 +1,5 @@
-#ifndef GEOMETRY_TRIANGULATION_UTILS_H_
-#define GEOMETRY_TRIANGULATION_UTILS_H_
 
+#pragma once
 #include "triangulation_types.h"
 #include <vector>
 
@@ -164,4 +163,3 @@ class TriangulationUtils {
 }  // namespace triangulation_utils
 }  // namespace geometry
 
-#endif  // GEOMETRY_TRIANGULATION_UTILS_H_

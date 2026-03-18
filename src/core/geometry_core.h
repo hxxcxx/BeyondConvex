@@ -1,6 +1,5 @@
-#ifndef GEOMETRY_CORE_GEOMETRY_CORE_H_
-#define GEOMETRY_CORE_GEOMETRY_CORE_H_
 
+#pragma once
 #include "../core/point2d.h"
 #include "../core/vector2d.h"
 #include "../convex_hull/convex_hull.h"
@@ -23,4 +22,3 @@ class GeometryCore {
 }  // namespace internal
 }  // namespace geometry
 
-#endif  // GEOMETRY_CORE_GEOMETRY_CORE_H_

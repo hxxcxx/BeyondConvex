@@ -1,6 +1,5 @@
-#ifndef VIEWER_TRIANGULATION_SCENE_H_
-#define VIEWER_TRIANGULATION_SCENE_H_
 
+#pragma once
 #include "../scene_base.h"
 #include "../../../src/triangulation/triangulation.h"
 #include <vector>
@@ -63,4 +62,3 @@ class TriangulationScene : public GeometryScene {
 
 }  // namespace geometry
 
-#endif  // VIEWER_TRIANGULATION_SCENE_H_

@@ -1,6 +1,5 @@
-#ifndef GEOMETRY_GEOMETRY_UTILS_H_
-#define GEOMETRY_GEOMETRY_UTILS_H_
 
+#pragma once
 #include "core/point2d.h"
 #include "core/vector2d.h"
 #include "convex_hull/convex_hull.h"
@@ -24,4 +23,3 @@ class GeometryUtils {
 
 }  // namespace geometry
 
-#endif  // GEOMETRY_GEOMETRY_UTILS_H_

@@ -1,6 +1,5 @@
-#ifndef GEOMETRY_VORONOI_TYPES_H_
-#define GEOMETRY_VORONOI_TYPES_H_
 
+#pragma once
 #include "../core/point2d.h"
 #include "../core/edge2d.h"
 #include <vector>
@@ -139,4 +138,3 @@ struct VoronoiBounds {
 
 }  // namespace geometry
 
-#endif  // GEOMETRY_VORONOI_TYPES_H_

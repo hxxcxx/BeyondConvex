@@ -1,6 +1,5 @@
-#ifndef GEOMETRY_CONVEX_POLYGON_INTERSECTION_H_
-#define GEOMETRY_CONVEX_POLYGON_INTERSECTION_H_
 
+#pragma once
 #include "../core/point2d.h"
 #include "../convex_hull/convex_hull.h"
 #include <vector>
@@ -82,4 +81,3 @@ class ConvexPolygonIntersection {
 
 }  // namespace geometry
 
-#endif  // GEOMETRY_CONVEX_POLYGON_INTERSECTION_H_

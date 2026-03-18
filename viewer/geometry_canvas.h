@@ -1,6 +1,5 @@
-#ifndef VIEWER_GEOMETRY_CANVAS_H_
-#define VIEWER_GEOMETRY_CANVAS_H_
 
+#pragma once
 #include "scene_manager.h"
 #include <string>
 
@@ -35,4 +34,3 @@ class GeometryCanvas {
 
 }  // namespace geometry
 
-#endif  // VIEWER_GEOMETRY_CANVAS_H_

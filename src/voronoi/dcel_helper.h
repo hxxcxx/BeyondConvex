@@ -1,6 +1,5 @@
-#ifndef GEOMETRY_VORONOI_DCEL_HELPER_H_
-#define GEOMETRY_VORONOI_DCEL_HELPER_H_
 
+#pragma once
 #include "../dcel/dcel.h"
 #include "voronoi_types.h"
 #include "half_plane_clipper.h"
@@ -147,4 +146,3 @@ class DCELHelper {
 
 }  // namespace geometry
 
-#endif  // GEOMETRY_VORONOI_DCEL_HELPER_H_

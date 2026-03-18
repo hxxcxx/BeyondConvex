@@ -1,7 +1,4 @@
-#ifndef GEOMETRY_CORE_CONVEX_HULL_BUILDER_H_
-#define GEOMETRY_CORE_CONVEX_HULL_BUILDER_H_
-
-#include "convex_hull/convex_hull.h"
+﻿#pragma once
 #include "../core/point2d.h"
 #include <vector>
 
@@ -50,5 +47,3 @@ class ConvexHullBuilder {
 };
 
 }  // namespace geometry
-
-#endif  // GEOMETRY_CORE_CONVEX_HULL_BUILDER_H_

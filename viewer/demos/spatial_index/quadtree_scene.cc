@@ -2,6 +2,7 @@
 #include <imgui.h>
 #include <chrono>
 #include <algorithm>
+#include <random>
 
 namespace geometry {
 
@@ -183,6 +184,42 @@ void QuadtreeScene::PerformRadiusQuery(const Point2D& center, double radius) {
   query_point_ = center;
   query_radius_ = radius;  // Save the query radius
   show_query_ = true;
+}
+
+void QuadtreeScene::GenerateRandomPoints(int count) {
+  // Ensure quadtree is initialized
+  if (!quadtree_) {
+    InitializeQuadtree();
+  }
+  
+  // Use current canvas size or default
+  double max_x = bounds_initialized_ ? canvas_width_ : 800.0;
+  double max_y = bounds_initialized_ ? canvas_height_ : 600.0;
+  
+  // Add some padding to keep points away from edges
+  double padding = 20.0;
+  double min_x = padding;
+  double min_y = padding;
+  max_x -= padding;
+  max_y -= padding;
+  
+  // Random number generation
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_real_distribution<double> dis_x(min_x, max_x);
+  std::uniform_real_distribution<double> dis_y(min_y, max_y);
+  
+  // Generate and insert points
+  for (int i = 0; i < count; ++i) {
+    double x = dis_x(gen);
+    double y = dis_y(gen);
+    Point2D point(x, y);
+    
+    points_.push_back(point);
+    if (quadtree_) {
+      quadtree_->Insert(point);
+    }
+  }
 }
 
 void QuadtreeScene::Render(float canvas_x, float canvas_y,
@@ -412,6 +449,22 @@ void QuadtreeScene::RenderUI() {
   ImGui::SameLine();
   if (ImGui::Button("Clear All")) {
     Reset();
+  }
+  
+  ImGui::Separator();
+  
+  // Generate random points buttons
+  ImGui::Text("Generate Random Points:");
+  if (ImGui::Button("Add 10 Points")) {
+    GenerateRandomPoints(10);
+  }
+  ImGui::SameLine();
+  if (ImGui::Button("Add 50 Points")) {
+    GenerateRandomPoints(50);
+  }
+  ImGui::SameLine();
+  if (ImGui::Button("Add 100 Points")) {
+    GenerateRandomPoints(100);
   }
   
   ImGui::Separator();

@@ -82,6 +82,9 @@ class QuadtreeScene : public GeometryScene {
   void PerformNearestNeighbor(const Point2D& query);
   void PerformRadiusQuery(const Point2D& center, double radius);
   
+  // Test helpers
+  void GenerateRandomPoints(int count);
+  
   // Rendering helpers
   void RenderQuadtree(const QuadTreeNode* node, 
                      float canvas_x, float canvas_y,

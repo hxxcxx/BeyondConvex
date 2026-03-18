@@ -1,4 +1,4 @@
-# BeyondConvex - 计算几何库
+# BeyondConvex
 
 <div align="center">
 

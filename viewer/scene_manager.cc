@@ -15,6 +15,7 @@ SceneManager::SceneManager() {
   scenes_.push_back(std::make_unique<VoronoiScene>());
   scenes_.push_back(std::make_unique<DCELTestScene>());
   scenes_.push_back(std::make_unique<QuadtreeScene>());
+  scenes_.push_back(std::make_unique<KDTreeScene>());
   
   // Set first scene as active
   if (!scenes_.empty()) {

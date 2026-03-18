@@ -11,6 +11,7 @@
 #include "demos/voronoi/voronoi_scene.h"
 #include "demos/dcel/dcel_test_scene.h"
 #include "demos/spatial_index/quadtree_scene.h"
+#include "demos/spatial_index/kdtree_scene.h"
 #include <memory>
 #include <vector>
 

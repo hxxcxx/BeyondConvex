@@ -18,6 +18,10 @@ file(GLOB_RECURSE demo_headers
     "demos/*.h"
 )
 
+# Exclude benchmark files (they have their own main)
+list(FILTER viewer_sources EXCLUDE REGEX ".*delaunay_benchmark\\.cc$")
+list(FILTER demo_sources EXCLUDE REGEX ".*delaunay_benchmark\\.cc$")
+
 # Create viewer executable (include headers for IDE)
 add_executable(geometry_viewer 
     ${viewer_sources} 

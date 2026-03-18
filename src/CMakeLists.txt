@@ -9,6 +9,12 @@ file(GLOB_RECURSE geometry_headers
     "*.h"
 )
 
+# Temporarily exclude problematic triangulation files
+list(FILTER geometry_sources EXCLUDE REGEX ".*delaunay_triangulation_optimized\\.cc$")
+list(FILTER geometry_sources EXCLUDE REGEX ".*ear_clipping_triangulation\\.cc$")
+list(FILTER geometry_sources EXCLUDE REGEX ".*sweep_line_triangulation\\.cc$")
+list(FILTER geometry_sources EXCLUDE REGEX ".*triangulation_utils\\.cc$")
+
 # Create geometry library (include headers for IDE)
 add_library(geometry_lib 
     ${geometry_sources}

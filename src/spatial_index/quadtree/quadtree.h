@@ -1,5 +1,4 @@
-#ifndef GEOMETRY_SPATIAL_INDEX_QUADTREE_QUADTREE_H_
-#define GEOMETRY_SPATIAL_INDEX_QUADTREE_QUADTREE_H_
+#pragma once
 
 #include "quadtree_node.h"
 #include <vector>
@@ -79,5 +78,3 @@ class Quadtree {
 };
 
 }  // namespace geometry
-
-#endif  // GEOMETRY_SPATIAL_INDEX_QUADTREE_QUADTREE_H_

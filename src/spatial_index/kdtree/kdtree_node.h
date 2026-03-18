@@ -1,5 +1,4 @@
-#ifndef GEOMETRY_SPATIAL_INDEX_KDTREE_KDTREE_NODE_H_
-#define GEOMETRY_SPATIAL_INDEX_KDTREE_KDTREE_NODE_H_
+#pragma once
 
 #include "../../core/point2d.h"
 #include "../spatial_index_common.h"
@@ -83,5 +82,3 @@ class KDTreeNode {
 };
 
 }  // namespace geometry
-
-#endif  // GEOMETRY_SPATIAL_INDEX_KDTREE_KDTREE_NODE_H_

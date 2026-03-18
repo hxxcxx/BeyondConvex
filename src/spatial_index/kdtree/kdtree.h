@@ -1,5 +1,4 @@
-#ifndef GEOMETRY_SPATIAL_INDEX_KDTREE_KDTREE_H_
-#define GEOMETRY_SPATIAL_INDEX_KDTREE_KDTREE_H_
+#pragma once
 
 #include "kdtree_node.h"
 #include <vector>
@@ -71,5 +70,3 @@ class KDTree {
 };
 
 }  // namespace geometry
-
-#endif  // GEOMETRY_SPATIAL_INDEX_KDTREE_KDTREE_H_

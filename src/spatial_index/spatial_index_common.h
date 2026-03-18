@@ -1,5 +1,4 @@
-#ifndef GEOMETRY_SPATIAL_INDEX_SPATIAL_INDEX_COMMON_H_
-#define GEOMETRY_SPATIAL_INDEX_SPATIAL_INDEX_COMMON_H_
+#pragma once
 
 #include "../core/point2d.h"
 
@@ -48,5 +47,3 @@ struct BoundingBox {
 };
 
 }  // namespace geometry
-
-#endif  // GEOMETRY_SPATIAL_INDEX_SPATIAL_INDEX_COMMON_H_

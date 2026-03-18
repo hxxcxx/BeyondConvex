@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "convex_hull.h"
 #include "../core/point2d.h"
 #include <vector>
 

@@ -123,6 +123,10 @@ bool BVHScene::OnMouseClicked(double x, double y) {
 
 void BVHScene::UpdateMousePosition(double x, double y) {
   current_mouse_pos_ = Point2D(x, y);
+  
+  if (is_dragging_) {
+    drag_end_ = current_mouse_pos_;
+  }
 }
 
 void BVHScene::PerformNearestNeighbor(const Point2D& query) {
@@ -229,6 +233,14 @@ void BVHScene::Render(float canvas_x, float canvas_y,
   ImVec2 canvas_p0(canvas_x, canvas_y);
   ImVec2 canvas_p1(canvas_x + canvas_width, canvas_y + canvas_height);
   
+  // Update mouse position
+  ImVec2 mouse_pos = ImGui::GetMousePos();
+  if (ImGui::IsMouseHoveringRect(canvas_p0, canvas_p1)) {
+    double mouse_x = mouse_pos.x - canvas_x;
+    double mouse_y = canvas_height - (mouse_pos.y - canvas_y);
+    UpdateMousePosition(mouse_x, mouse_y);
+  }
+  
   // Draw canvas background
   draw_list->AddRectFilled(canvas_p0, canvas_p1, IM_COL32(30, 30, 35, 255));
   
@@ -250,14 +262,29 @@ void BVHScene::Render(float canvas_x, float canvas_y,
   // Draw current drag operation
   if (is_dragging_ && (mode_ == BVHDemoMode::RangeQuery || 
                        mode_ == BVHDemoMode::RadiusQuery)) {
-    ImVec2 start(drag_start_.x + canvas_x, canvas_y + canvas_height - drag_start_.y);
-    ImVec2 end(current_mouse_pos_.x + canvas_x, canvas_y + canvas_height - current_mouse_pos_.y);
-    
     if (mode_ == BVHDemoMode::RangeQuery) {
-      draw_list->AddRect(start, end, IM_COL32(255, 255, 0, 150), 0.0f, 0, 2.0f);
+      float x1 = canvas_x + std::min(drag_start_.x, drag_end_.x);
+      float y1 = canvas_y + canvas_height - std::max(drag_start_.y, drag_end_.y);
+      float x2 = canvas_x + std::max(drag_start_.x, drag_end_.x);
+      float y2 = canvas_y + canvas_height - std::min(drag_start_.y, drag_end_.y);
+      
+      draw_list->AddRect(ImVec2(x1, y1), ImVec2(x2, y2), 
+                        IM_COL32(255, 255, 0, 255), 0.0f, 0, 2.0f);
+      draw_list->AddRectFilled(ImVec2(x1, y1), ImVec2(x2, y2), 
+                              IM_COL32(255, 255, 0, 50));
     } else if (mode_ == BVHDemoMode::RadiusQuery) {
-      double radius = drag_start_.DistanceTo(current_mouse_pos_);
-      draw_list->AddCircle(start, radius, IM_COL32(0, 150, 255, 150), 32, 2.0f);
+      double radius = drag_start_.DistanceTo(drag_end_);
+      ImVec2 center(canvas_x + drag_start_.x, 
+                   canvas_y + canvas_height - drag_start_.y);
+      
+      draw_list->AddCircle(center, static_cast<float>(radius), 
+                          IM_COL32(0, 255, 0, 255), 0, 2.0f);
+      draw_list->AddCircleFilled(center, static_cast<float>(radius), 
+                                IM_COL32(0, 255, 0, 30));
+      
+      ImVec2 edge(canvas_x + drag_end_.x, 
+                 canvas_y + canvas_height - drag_end_.y);
+      draw_list->AddLine(center, edge, IM_COL32(0, 255, 0, 255), 1.0f);
     }
   }
   
@@ -389,8 +416,8 @@ void BVHScene::RenderUI() {
   
   // Mode selection
   ImGui::Text("Demo Mode:");
-  const char* modes[] = { "Insert Points", "Range Query", "Nearest Neighbor", 
-                          "K-Nearest Neighbors", "Radius Query" };
+  const char* modes[] = { "Insert Points", "Nearest Neighbor", "K-Nearest Neighbors", 
+                          "Range Query", "Radius Query" };
   int current_mode = static_cast<int>(mode_);
   if (ImGui::Combo("##Mode", &current_mode, modes, 5)) {
     mode_ = static_cast<BVHDemoMode>(current_mode);
@@ -413,7 +440,10 @@ void BVHScene::RenderUI() {
   }
   
   if (mode_ == BVHDemoMode::KNearestNeighbors) {
-    ImGui::SliderInt("K Neighbors", &k_neighbors_, 1, 20);
+    ImGui::SliderInt("K Value", &k_neighbors_, 1, 20);
+    if (ImGui::IsItemHovered()) {
+      ImGui::SetTooltip("Number of nearest neighbors to find");
+    }
   }
   
   ImGui::Separator();

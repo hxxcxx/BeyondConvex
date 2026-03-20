@@ -9,9 +9,9 @@ namespace geometry {
 
 enum class BVHDemoMode {
   InsertPoints,      // Click to insert points
-  RangeQuery,        // Drag to select range
   NearestNeighbor,   // Click to find nearest neighbor
   KNearestNeighbors, // Click to find k nearest neighbors
+  RangeQuery,        // Drag to select range
   RadiusQuery        // Drag to define radius
 };
 

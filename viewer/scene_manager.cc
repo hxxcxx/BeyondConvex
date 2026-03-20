@@ -1,6 +1,7 @@
 #include "scene_manager.h"
 #include "demos/voronoi/voronoi_scene.h"
 #include "demos/dcel/dcel_test_scene.h"
+#include "demos/spatial_index/bsptree_scene.h"
 
 namespace geometry {
 
@@ -16,6 +17,7 @@ SceneManager::SceneManager() {
   scenes_.push_back(std::make_unique<DCELTestScene>());
   scenes_.push_back(std::make_unique<QuadtreeScene>());
   scenes_.push_back(std::make_unique<KDTreeScene>());
+  scenes_.push_back(std::make_unique<BSPTreeScene>());
   
   // Set first scene as active
   if (!scenes_.empty()) {

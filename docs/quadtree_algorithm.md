@@ -1081,8 +1081,3 @@ void PerformanceTest() {
    - [QuadTree Visualization](https://people.cs.vt.edu/~shaffer/Book/C++3elatest.pdf)
    - [Spatial Data Structures](https://en.wikipedia.org/wiki/Quadtree)
 
----
-
-**文档版本**: 1.0  
-**最后更新**: 2026-03-19  
-**作者**: BeyondConvex Project

@@ -828,7 +828,3 @@ void PerformanceTest() {
    - [Nearest Neighbor Search](https://en.wikipedia.org/wiki/K-d_tree)
 
 ---
-
-**文档版本**: 1.0  
-**最后更新**: 2026-03-19  
-**作者**: BeyondConvex Project

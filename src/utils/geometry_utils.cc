@@ -1,5 +1,5 @@
 #include "geometry_utils.h"
-#include "core/geometry_core.h"
+#include "../core/geometry_core.h"
 
 namespace geometry {
 

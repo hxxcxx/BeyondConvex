@@ -1,8 +1,7 @@
-
 #pragma once
-#include "core/point2d.h"
-#include "core/vector2d.h"
-#include "convex_hull/convex_hull.h"
+#include "../core/point2d.h"
+#include "../core/vector2d.h"
+#include "../convex_hull/convex_hull.h"
 #include <vector>
 
 namespace geometry {
@@ -22,4 +21,3 @@ class GeometryUtils {
 };
 
 }  // namespace geometry
-

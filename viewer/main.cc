@@ -1,7 +1,7 @@
 #include <iostream>
 #include <memory>
 #include "core/point2d.h"
-#include "../src/geometry_utils.h"
+#include "../src/utils/geometry_utils.h"
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>

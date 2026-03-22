@@ -3,6 +3,7 @@
 #include "demos/dcel/dcel_test_scene.h"
 #include "demos/spatial_index/bsptree_scene.h"
 #include "demos/spatial_index/bvh_scene.h"
+#include "demos/spatial_index/rtree_scene.h"
 
 namespace geometry {
 
@@ -20,6 +21,7 @@ SceneManager::SceneManager() {
   scenes_.push_back(std::make_unique<KDTreeScene>());
   scenes_.push_back(std::make_unique<BSPTreeScene>());
   scenes_.push_back(std::make_unique<BVHScene>());
+  scenes_.push_back(std::make_unique<RTreeScene>());
   
   // Set first scene as active
   if (!scenes_.empty()) {

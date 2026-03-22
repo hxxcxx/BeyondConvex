@@ -1,165 +1,176 @@
-# R-Tree Algorithm
+# R-Tree 算法
 
-## Overview
+## 概述
 
-R-tree is a tree data structure used for spatial indexing of rectangle objects. Unlike KD-tree and Quadtree which are optimized for point data, R-tree is specifically designed for handling spatial objects with extent, such as:
+R-tree 是一种用于矩形对象空间索引的树数据结构。与优化点数据的 KD-tree 和 Quadtree 不同，R-tree 专门设计用于处理具有空间范围的对象，例如：
 
-- Rectangles and bounding boxes
-- Polygons
-- 2D/3D geometric objects
-- GIS data (buildings, roads, etc.)
+- 矩形和边界框
+- 多边形
+- 2D/3D 几何对象
+- GIS 数据（建筑物、道路等）
 
-## Key Characteristics
+## 核心特征
 
-### Advantages over Point-based Trees
+### 相对于点树的优势
 
-1. **Handles Spatial Extent**: Stores actual rectangle objects, not just points
-2. **Efficient Range Queries**: Optimized for finding objects that intersect with a query region
-3. **Dynamic**: Supports efficient insertion and deletion
-4. **Balanced**: Maintains balance through node splitting algorithms
-5. **Disk-friendly**: Designed for secondary storage (original use case)
+1. **处理空间范围**：存储实际的矩形对象，而不仅仅是点
+2. **高效的范围查询**：优化查找与查询区域相交的对象
+3. **动态性**：支持高效的插入和删除
+4. **平衡性**：通过节点分裂算法保持平衡
+5. **磁盘友好**：专为二级存储设计（最初用途）
 
-### Structure
+### 结构
 
-- **Leaf Nodes**: Contain actual rectangle data with associated IDs
-- **Internal Nodes**: Contain minimum bounding rectangles (MBRs) that enclose all entries in child nodes
-- **Node Capacity**: Each node can hold between `min_entries` and `max_entries` entries
+- **叶节点**：包含实际的矩形数据及其关联的 ID
+- **内部节点**：包含最小边界矩形（MBR），用于包围子节点中的所有条目
+- **节点容量**：每个节点可以容纳 `min_entries` 到 `max_entries` 个条目
 
-## Algorithm Details
+## 算法详解
 
-### Insertion
+### 插入
 
-1. **Choose Subtree**: Starting from root, recursively choose the child node whose MBR requires least area enlargement to include the new rectangle
-2. **Leaf Node Insertion**: When reaching a leaf, add the new rectangle
-3. **Node Splitting**: If a node overflows (exceeds `max_entries`), split it using quadratic split algorithm
-4. **Tree Adjustment**: Propagate changes up the tree, updating MBRs and splitting nodes as needed
+1. **选择子树**：从根节点开始，递归选择 MBR 需要最小面积扩展来包含新矩形的子节点
+2. **叶节点插入**：到达叶节点时，添加新矩形
+3. **节点分裂**：如果节点溢出（超过 `max_entries`），使用二次分裂算法分裂它
+4. **树调整**：向上传播更改，更新 MBR 并根据需要分裂节点
 
-### Quadratic Split Algorithm
+### 二次分裂算法
 
-1. **Pick Seeds**: Choose two entries that would waste the most area if placed in the same group
-2. **Distribute Entries**: For each remaining entry, assign it to the group that causes less area enlargement
-3. **Create New Node**: Move one group to a new node
+1. **选择种子**：选择两个如果放在同一组会浪费最多面积的条目
+2. **分配条目**：对于每个剩余条目，将其分配给导致较小面积扩展的组
+3. **创建新节点**：将一组移动到新节点
 
-### Query Operations
+### 查询操作
 
-#### Range Query
-- Find all rectangles that intersect with a query rectangle
-- Traverse tree, only visiting subtrees whose MBR intersects with query range
+#### 范围查询
+- 查找与查询矩形相交的所有矩形
+- 遍历树，只访问 MBR 与查询范围相交的子树
 
-#### Point Query
-- Find all rectangles containing a specific point
-- Special case of range query with zero-area query rectangle
+#### 点查询
+- 查找包含特定点的所有矩形
+- 范围查询的特殊情况，使用零面积查询矩形
 
-#### Intersection Query
-- Find all rectangles that intersect with a given rectangle
-- Same as range query
+#### 相交查询
+- 查找与给定矩形相交的所有矩形
+- 与范围查询相同
 
-## Implementation Details
+## 实现细节
 
-### Data Structures
+### 数据结构
 
 ```cpp
-// Entry in R-tree node
+// R-tree 节点中的条目
 struct RTreeEntry {
-  BoundingBox mbr;              // Minimum bounding rectangle
-  std::unique_ptr<RTreeNode> child;  // Child node (null for leaf entries)
-  int data_id;                  // Data ID (only used in leaf entries)
+  BoundingBox mbr;              // 最小边界矩形
+  std::unique_ptr<RTreeNode> child;  // 子节点（叶节点条目为 null）
+  int data_id;                  // 数据 ID（仅用于叶节点条目）
 };
 
-// R-tree node
+// R-tree 节点
 class RTreeNode {
-  bool is_leaf_;                // True if leaf node
+  bool is_leaf_;                // 是否为叶节点
   std::vector<RTreeEntry> entries_;
-  BoundingBox mbr_;             // MBR of all entries
+  BoundingBox mbr_;             // 所有条目的 MBR
 };
 ```
 
-### Parameters
+### 参数
 
-- **max_entries**: Maximum entries per node (default: 4)
-- **min_entries**: Minimum entries per node (default: 2, should be ≤ max_entries/2)
+- **max_entries**：每个节点的最大条目数（默认：4）
+- **min_entries**：每个节点的最小条目数（默认：2，应 ≤ max_entries/2）
 
-### Complexity
+### 复杂度
 
-- **Insertion**: O(log n) average case
-- **Range Query**: O(log n + k) where k is number of results
-- **Space**: O(n)
+- **插入**：平均情况 O(log n)
+- **范围查询**：O(log n + k)，其中 k 是结果数量
+- **空间**：O(n)
 
-## Usage Example
+## 使用示例
 
 ```cpp
-// Create R-tree with custom parameters
+// 创建具有自定义参数的 R-tree
 RTree rtree(4, 2);  // max_entries=4, min_entries=2
 
-// Insert rectangles
+// 插入矩形
 BoundingBox rect1(10, 10, 50, 50);
 BoundingBox rect2(60, 60, 100, 100);
 rtree.Insert(rect1, 0);
 rtree.Insert(rect2, 1);
 
-// Range query
+// 范围查询
 BoundingBox query_range(0, 0, 30, 30);
 std::vector<int> results = rtree.RangeQuery(query_range);
 
-// Point query
+// 点查询
 Point2D point(25, 25);
 std::vector<int> point_results = rtree.PointQuery(point);
 ```
 
-## Demo Scene Features
+## 演示场景功能
 
-The R-tree demo scene provides:
+R-tree 演示场景提供：
 
-### Modes
+### 模式
 
-1. **Insert Rectangles**: Click and drag to create new rectangles
-2. **Range Query**: Click and drag to define query range
-3. **Point Query**: Click to query rectangles at a point
-4. **Intersection Query**: Click and drag to create query rectangle
+1. **插入矩形**：点击并拖动创建新矩形
+2. **范围查询**：点击并拖动定义查询范围
+3. **点查询**：点击查询某点的矩形
+4. **相交查询**：点击并拖动创建查询矩形
 
-### Test Data Generation
+### 测试数据生成
 
-- **Random Rectangles**: Generate random positioned and sized rectangles
-- **Grid Layout**: Create evenly spaced grid of rectangles
-- **Overlapping Rectangles**: Generate rectangles with intentional overlaps
+#### 基础模式
+- **随机矩形**：生成随机位置和大小的矩形（30/60/100 个）
+- **网格布局**：创建均匀间隔的矩形网格（5x5/8x8/10x10）
 
-### Visualization
+#### 艺术模式
+- **螺旋模式**：矩形沿螺旋线排列，大小逐渐增大（50/100 个）
+- **同心圆模式**：多个圆环上的矩形，形成花朵状图案（4x12/6x16）
 
-- **Rectangles**: Color-coded by index
-- **Tree Structure**: MBRs shown with depth-based colors
-- **Query Results**: Highlighted in green
-- **Statistics**: Real-time query performance metrics
+#### 真实场景模式
+- **城市街区**：模拟城市街道和建筑物的布局（6x8/8x10）
+- **随机簇群**：多个矩形簇，模拟现实中的聚集分布（5x10/8x8）
 
-## Comparison with Other Spatial Indexes
+#### 压力测试
+- **重叠矩形**：大量重叠的矩形，测试 R-tree 的查询性能（30/60 个）
 
-| Feature | R-Tree | KD-Tree | Quadtree |
+### 可视化
+
+- **矩形**：按索引使用黄金角度生成的高饱和度鲜艳颜色
+- **树结构**：MBR 使用基于深度的渐变色（青色→蓝色→紫色→品红→橙色）
+- **查询结果**：高亮显示为绿色，带发光效果
+- **统计信息**：实时查询性能指标
+
+## 与其他空间索引的比较
+
+| 特性 | R-Tree | KD-Tree | Quadtree |
 |---------|--------|---------|----------|
-| Data Type | Rectangles | Points | Points |
-| Range Query | Excellent | Good | Good |
-| Insertion | O(log n) | O(log n) | O(log n) |
-| Dynamic | Yes | No (usually) | Yes |
-| Space Overhead | Medium | Low | High |
-| Best Use Case | GIS, Game Objects | Nearest Neighbor | Spatial Partitioning |
+| 数据类型 | 矩形 | 点 | 点 |
+| 范围查询 | 优秀 | 良好 | 良好 |
+| 插入 | O(log n) | O(log n) | O(log n) |
+| 动态性 | 是 | 否（通常） | 是 |
+| 空间开销 | 中等 | 低 | 高 |
+| 最佳用例 | GIS、游戏对象 | 最近邻 | 空间分区 |
 
-## Applications
+## 应用场景
 
-1. **Geographic Information Systems (GIS)**
-   - Spatial queries on maps
-   - Finding features within a region
+1. **地理信息系统 (GIS)**
+   - 地图上的空间查询
+   - 查找区域内的要素
 
-2. **Computer Games**
-   - Collision detection
-   - Spatial culling for rendering
+2. **计算机游戏**
+   - 碰撞检测
+   - 渲染的空间剔除
 
-3. **Database Systems**
-   - Spatial indexing for queries
-   - Multi-dimensional data
+3. **数据库系统**
+   - 查询的空间索引
+   - 多维数据
 
-4. **CAD/CAM Systems**
-   - Object selection
-   - Spatial queries on drawings
+4. **CAD/CAM 系统**
+   - 对象选择
+   - 图纸上的空间查询
 
-## References
+## 参考文献
 
 - Guttman, A. (1984). "R-trees: a dynamic index structure for spatial searching"
 - Beckmann, N., et al. (1990). "The R*-tree: an efficient and robust access method for points and rectangles"

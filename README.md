@@ -8,7 +8,7 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)]()
 
-**功能特性：** 凸包 • 交集 • 三角剖分 • Voronoi • DCEL
+**功能特性：** 凸包 • 交集 • 三角剖分 • Voronoi • DCEL • 空间索引
 
 </div>
 
@@ -39,11 +39,16 @@ BeyondConvex 通过学习优质计算几何资源（邓俊辉教授课程、B站
 | | Delaunay | O(n log n) | O(n) | ✅ |
 | **Voronoi** | Site-based | O(n²) | O(n²) | ✅ |
 | **Data Structure** | DCEL | - | O(V+E+F) | ✅ |
+| **Spatial Index** | KD-Tree | O(log n) | O(n) | ✅ |
+| | Quadtree | O(log n) | O(n) | ✅ |
+| | R-Tree | O(log n) | O(n) | ✅ |
+| | BSP-Tree | O(log n) | O(n) | ✅ |
+| | BVH | O(log n) | O(n) | ✅ |
 
 ## 功能特性
 
 - ✅ 遵循 Google C++ Style Guide 的现代 C++17 代码
-- ✅ 基于 ImGui 的交互式可视化，包含 8 个 demo scenes
+- ✅ 基于 ImGui 的交互式可视化，包含 13 个 demo scenes
 - ✅ 使用 Facade Pattern 的模块化架构
 - ✅ 完整的 computational geometry algorithms 套件
 - ✅ DCEL (Doubly Connected Edge List) 数据结构
@@ -80,6 +85,21 @@ BeyondConvex/
 │   │   └── dcel_builder.h/cc   # DCEL builder
 │   └── voronoi/               # ✅ Voronoi diagrams
 │       └── voronoi_diagram.h/cc  # Voronoi generation
+│   └── spatial_index/         # ✅ Spatial indexing structures
+│       ├── kdtree/            # KD-Tree implementation
+│       │   ├── kdtree.h/cc    # KD-Tree class
+│       │   └── kdtree_node.h  # KD-Tree node
+│       ├── quadtree/          # Quadtree implementation
+│       │   ├── quadtree.h/cc  # Quadtree class
+│       │   └── quadtree_node.h # Quadtree node
+│       ├── rtree/             # R-Tree implementation
+│       │   ├── rtree.h/cc     # R-Tree class
+│       │   └── rtree_node.h   # R-Tree node
+│       ├── bsptree/           # BSP-Tree implementation
+│       │   └── bsptree.h/cc   # BSP-Tree class
+│       ├── bvhtree/           # BVH implementation
+│       │   └── bvhtree.h/cc   # BVH class
+│       └── spatial_index_common.h # Common structures
 ├── viewer/                     # ImGui visualization
 │   ├── main.cc                # Entry point
 │   ├── scene_manager.h/cc     # Scene management
@@ -97,8 +117,14 @@ BeyondConvex/
 │       │   └── triangulation_scene.h/cc
 │       ├── voronoi/           # ✅ Voronoi scene (1)
 │       │   └── voronoi_scene.h/cc
-│       └── dcel/              # ✅ DCEL test scene (1)
-│           └── dcel_test_scene.h/cc
+│       ├── dcel/              # ✅ DCEL test scene (1)
+│       │   └── dcel_test_scene.h/cc
+│       └── spatial_index/     # ✅ Spatial index scenes (5)
+│           ├── kdtree_scene.h/cc
+│           ├── quadtree_scene.h/cc
+│           ├── rtree_scene.h/cc
+│           ├── bsptree_scene.h/cc
+│           └── bvh_scene.h/cc
 ├── docs/                       # ✅ Comprehensive documentation
 │   ├── convex_hull_algorithms.md
 │   ├── bentley_ottmann_algorithm.md
@@ -107,6 +133,12 @@ BeyondConvex/
 │   ├── sweep_line_triangulation.md
 │   ├── convex_polygon_intersection.md
 │   ├── delaunay_triangulation.md
+│   └── spatial_optimization.md
+│   ├── kdtree_algorithm.md
+│   ├── quadtree_algorithm.md
+│   ├── rtree_algorithm.md
+│   ├── bsptree_algorithm.md
+│   ├── BVH_Tree_Documentation.md
 │   └── spatial_optimization.md
 └── third_party/               # External dependencies
     ├── glfw/                  # GLFW framework
@@ -170,6 +202,11 @@ cmake --build . --config Release
 6. **Triangulation** - Sweep line, ear clipping, and Delaunay methods
 7. **Voronoi Diagram** - 从 sites 生成 Voronoi cells
 8. **DCEL Test** - Doubly Connected Edge List data structure
+9. **KD-Tree** - Point-based spatial indexing with nearest neighbor search
+10. **Quadtree** - 2D space partitioning for efficient range queries
+11. **R-Tree** - Rectangle-based spatial indexing for GIS and games
+12. **BSP-Tree** - Binary space partitioning for collision detection
+13. **BVH** - Bounding Volume Hierarchy for ray tracing and collision
 
 ### 代码示例
 
@@ -212,6 +249,25 @@ TriangulationResult tri = Triangulation::Triangulate(
 std::vector<Point2D> sites = {{0.0, 0.0}, {1.0, 1.0}, {2.0, 0.0}};
 VoronoiDiagramResult voronoi = VoronoiDiagram::Generate(sites);
 
+// ========== Spatial Indexing ==========
+// KD-Tree for points
+KDTree kdtree;
+kdtree.Insert({0.0, 0.0});
+kdtree.Insert({1.0, 1.0});
+auto nearest = kdtree.NearestNeighbor({0.5, 0.5});
+
+// Quadtree for range queries
+Quadtree quadtree(BoundingBox(0, 0, 100, 100), 4);
+quadtree.Insert({10.0, 10.0});
+quadtree.Insert({20.0, 20.0});
+auto points_in_range = quadtree.RangeQuery(BoundingBox(5, 5, 15, 15));
+
+// R-Tree for rectangles
+RTree rtree(4, 2);
+rtree.Insert(BoundingBox(0, 0, 10, 10), 0);
+rtree.Insert(BoundingBox(5, 5, 15, 15), 1);
+auto intersecting = rtree.RangeQuery(BoundingBox(8, 8, 12, 12));
+
 // ========== To-Left Test ==========
 Point2D p(0.0, 0.0), q(1.0, 0.0), r(0.5, 0.5);
 bool is_left = GeometryUtils::ToLeftTest(p, q, r);  // true
@@ -252,6 +308,14 @@ bool is_left = GeometryUtils::ToLeftTest(p, q, r);  // true
 - **Voronoi Diagram Generation** - Site-based cell construction
 - Relationship with Delaunay triangulation (dual graphs)
 - 交互式 visualization scene (1 demo)
+
+### ✅ Stage 7: Spatial Indexing (已完成)
+- **KD-Tree** - k-dimensional tree for point data
+- **Quadtree** - 2D recursive space partitioning
+- **R-Tree** - Rectangle-based indexing for spatial objects
+- **BSP-Tree** - Binary space partitioning
+- **BVH** - Bounding Volume Hierarchy
+- 交互式 visualization scenes (5 demos)
 
 ### 📋 Future Enhancements
 - Fortune's sweep line algorithm for Voronoi (O(n log n))
@@ -301,6 +365,15 @@ bool is_left = GeometryUtils::ToLeftTest(p, q, r);  // true
 - ✅ DCEL Builder for planar subdivisions
 - ✅ Efficient adjacency queries
 
+**Spatial Indexing:**
+- ✅ KD-Tree implementation for point data
+- ✅ Quadtree for 2D space partitioning
+- ✅ R-Tree for rectangle objects (GIS, games)
+- ✅ BSP-Tree for binary space partitioning
+- ✅ BVH for bounding volume hierarchy
+- ✅ Range queries, nearest neighbor search
+- ✅ Interactive visualization with multiple test patterns
+
 **Visualization & Demos:**
 - ✅ Interactive ImGui viewer with 8 demo scenes
 - ✅ Real-time algorithm visualization
@@ -332,6 +405,13 @@ bool is_left = GeometryUtils::ToLeftTest(p, q, r);  // true
 - [Convex Polygon Intersection](docs/convex_polygon_intersection.md) - Linear scan and binary search methods
 - [Delaunay Triangulation](docs/delaunay_triangulation.md) - Bowyer-Watson algorithm with spatial optimization
 - [Spatial Grid Optimization](docs/spatial_optimization.md) - Bucket-based acceleration for Delaunay
+
+### Spatial Index Documentation
+- [KD-Tree Algorithm](docs/kdtree_algorithm.md) - k-dimensional tree for spatial indexing
+- [Quadtree Algorithm](docs/quadtree_algorithm.md) - 2D space partitioning tree
+- [R-Tree Algorithm](docs/rtree_algorithm.md) - Rectangle-based spatial indexing
+- [BSP-Tree Algorithm](docs/bsptree_algorithm.md) - Binary space partitioning
+- [BVH Documentation](docs/BVH_Tree_Documentation.md) - Bounding Volume Hierarchy
 
 ### Data Structure Documentation
 - [DCEL Data Structure](docs/dcel_data_structure.md) - Doubly Connected Edge List

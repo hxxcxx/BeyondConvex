@@ -34,7 +34,6 @@ Makefile
 *.a
 
 # IDE
-.vscode/
 .idea/
 *.swp
 *.swo

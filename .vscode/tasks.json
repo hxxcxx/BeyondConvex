@@ -1,0 +1,65 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "CMake: 构建 Release",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "--build", "${workspaceFolder}/build",
+        "--config", "Release",
+        "--target", "geometry_viewer",
+        "-j"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": ["$msCompile"],
+      "detail": "CMake 构建 Release 配置"
+    },
+    {
+      "label": "CMake: 构建 RelWithDebInfo",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "--build", "${workspaceFolder}/build",
+        "--config", "RelWithDebInfo",
+        "--target", "geometry_viewer",
+        "-j"
+      ],
+      "group": "build",
+      "problemMatcher": ["$msCompile"],
+      "detail": "CMake 构建 RelWithDebInfo 配置"
+    },
+    {
+      "label": "CMake: 配置项目",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "-B", "${workspaceFolder}/build",
+        "-S", "${workspaceFolder}",
+        "-G", "Visual Studio 17 2022",
+        "-A", "x64"
+      ],
+      "problemMatcher": [],
+      "detail": "CMake 生成 VS2022 工程文件"
+    },
+    {
+      "label": "CMake: 重新配置并构建 Release",
+      "dependsOn": ["CMake: 配置项目", "CMake: 构建 Release"],
+      "dependsOrder": "sequence",
+      "group": "build",
+      "problemMatcher": [],
+      "detail": "重新配置后构建 Release"
+    },
+    {
+      "label": "CMake: 重新配置并构建 RelWithDebInfo",
+      "dependsOn": ["CMake: 配置项目", "CMake: 构建 RelWithDebInfo"],
+      "dependsOrder": "sequence",
+      "group": "build",
+      "problemMatcher": [],
+      "detail": "重新配置后构建 RelWithDebInfo"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "version": "2.0.0",
+  "configurations": [
+    {
+      "name": "RelWithDebInfo 调试",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/bin/RelWithDebInfo/geometry_viewer.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "console": "integratedTerminal",
+      "preLaunchTask": "CMake: 构建 RelWithDebInfo"
+    },
+    {
+      "name": "Release 运行",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/bin/Release/geometry_viewer.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "console": "integratedTerminal",
+      "preLaunchTask": "CMake: 构建 Release"
+    },
+    {
+      "name": "CMake: CMake Script",
+      "type": "cmake",
+      "request": "launch",
+      "cmakeDebugType": "script",
+      "scriptPath": "${file}"
+    }
+  ]
+}

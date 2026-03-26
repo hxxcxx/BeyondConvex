@@ -1,0 +1,15 @@
+{
+  "cmake.buildDirectory": "${workspaceFolder}/build",
+  "cmake.configurationPairs": {
+    "Release": "RelWithDebInfo"
+  },
+  "cmake.configureOnOpen": false,
+  "cmake.generator": "Visual Studio 17 2022",
+  "cmake.buildTask": true,
+  "cmake.statusbar.visibility": "visible",
+  "cmake.debugConfig": {
+    "cwd": "${workspaceFolder}",
+    "environment": [],
+    "externalConsole": false
+  }
+}

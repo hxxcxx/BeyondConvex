@@ -2,7 +2,7 @@
 #pragma once
 
 #include <vcclr.h>
-#include "../src/core/point2d.h"
+#include "../../src/core/point2d.h"
 
 namespace BeyondConvexCLI {
 
@@ -35,12 +35,23 @@ namespace BeyondConvexCLI {
             return m_native->DistanceSquaredTo(*other->m_native);
         }
 
-        // Cast operators
-        static operator ManagedPoint2D^(const geometry::Point2D& native) {
-            return gcnew ManagedPoint2D(native);
+        bool Equals(ManagedPoint2D^ other) {
+            return *m_native == *other->m_native;
         }
 
-        // Get native reference
+        virtual bool Equals(Object^ obj) override {
+            ManagedPoint2D^ other = dynamic_cast<ManagedPoint2D^>(obj);
+            return other != nullptr && Equals(other);
+        }
+
+        virtual int GetHashCode() override {
+            return (int)(m_native->x * 1000000) ^ (int)(m_native->y * 1000000);
+        }
+
+        String^ ToString() override {
+            return String::Format("({0:F6}, {1:F6})", m_native->x, m_native->y);
+        }
+
         geometry::Point2D* GetNative() { return m_native; }
         const geometry::Point2D* GetNative() const { return m_native; }
 

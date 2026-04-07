@@ -3,9 +3,9 @@
 
 #include <vcclr.h>
 #include <msclr/marshal.h>
-#include "../src/convex_hull/convex_hull.h"
-#include "ManagedPoint2D.h"
-#include "ManagedEdge2D.h"
+#include "../../src/convex_hull/convex_hull.h"
+#include "../core/ManagedPoint2D.h"
+#include "../core/ManagedEdge2D.h"
 
 namespace BeyondConvexCLI {
 

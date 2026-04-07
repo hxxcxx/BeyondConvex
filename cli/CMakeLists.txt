@@ -1,9 +1,8 @@
 # CLI CMakeLists.txt
 # C++/CLI wrapper for BeyondConvex library
-# Note: CMake has limited C++/CLI support, recommend using VS directly
+# 
+# NOTE: CMake has very limited C++/CLI support. 
+# This project should be built using Visual Studio directly.
+# Open BeyondConvex.sln in VS and add BeyondConvex.CLI.vcxproj manually.
 
-if(WIN32)
-    message(STATUS "C++/CLI support: Use Visual Studio to build cli/BeyondConvex.CLI.vcxproj")
-else()
-    message(STATUS "C++/CLI is Windows-only, skipping CLI project")
-endif()
+message(STATUS "C++/CLI project: Use Visual Studio to build cli/BeyondConvex.CLI.vcxproj")

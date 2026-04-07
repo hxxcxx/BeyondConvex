@@ -2,9 +2,9 @@
 #pragma once
 
 #include <vcclr.h>
-#include "../src/intersection/convex_polygon_intersection.h"
-#include "ManagedConvexHull.h"
-#include "ManagedPoint2D.h"
+#include "../../src/intersection/convex_polygon_intersection.h"
+#include "../convex_hull/ManagedConvexHull.h"
+#include "../core/ManagedPoint2D.h"
 
 namespace BeyondConvexCLI {
 
@@ -13,7 +13,7 @@ namespace BeyondConvexCLI {
     /// </summary>
     public enum class ManagedConvexIntersectionAlgorithm {
         kLinearScan = 0,     // O(n + m) linear scan
-        kBinarySearch = 1,   // O(log n + log m) binary search
+        kBinarySearch = 1   // O(log n + log m) binary search
     };
 
     /// <summary>
@@ -22,6 +22,8 @@ namespace BeyondConvexCLI {
     public ref class ManagedConvexIntersectionResult {
     public:
         ManagedConvexIntersectionResult() : m_native(new geometry::ConvexIntersectionResult()) {}
+        ManagedConvexIntersectionResult(const geometry::ConvexIntersectionResult& native) 
+            : m_native(new geometry::ConvexIntersectionResult(native)) {}
         ~ManagedConvexIntersectionResult() { delete m_native; }
 
         property cli::array<ManagedPoint2D^>^ Vertices {
@@ -102,6 +104,38 @@ namespace BeyondConvexCLI {
                 *point->m_native, 
                 *convex->GetNative()
             );
+        }
+
+        static cli::array<String^>^ GetSupportedAlgorithms() {
+            auto algs = geometry::ConvexPolygonIntersection::GetSupportedAlgorithms();
+            cli::array<String^>^ result = gcnew cli::array<String^>(algs.size());
+            for (size_t i = 0; i < algs.size(); ++i) {
+                result[i] = gcnew String(geometry::ConvexPolygonIntersection::GetAlgorithmName(algs[i]).c_str());
+            }
+            return result;
+        }
+
+        static String^ GetAlgorithmName(ManagedConvexIntersectionAlgorithm algorithm) {
+            return gcnew String(geometry::ConvexPolygonIntersection::GetAlgorithmName(
+                ToNativeAlgorithm(algorithm)).c_str());
+        }
+
+        static String^ GetAlgorithmComplexity(ManagedConvexIntersectionAlgorithm algorithm) {
+            return gcnew String(geometry::ConvexPolygonIntersection::GetAlgorithmComplexity(
+                ToNativeAlgorithm(algorithm)).c_str());
+        }
+
+    private:
+        static geometry::ConvexIntersectionAlgorithm ToNativeAlgorithm(
+            ManagedConvexIntersectionAlgorithm algorithm) {
+            switch (algorithm) {
+                case ManagedConvexIntersectionAlgorithm::kLinearScan:
+                    return geometry::ConvexIntersectionAlgorithm::kLinearScan;
+                case ManagedConvexIntersectionAlgorithm::kBinarySearch:
+                    return geometry::ConvexIntersectionAlgorithm::kBinarySearch;
+                default:
+                    return geometry::ConvexIntersectionAlgorithm::kLinearScan;
+            }
         }
     };
 }

@@ -2,7 +2,7 @@
 #pragma once
 
 #include <vcclr.h>
-#include "../src/core/vector2d.h"
+#include "../../src/core/vector2d.h"
 
 namespace BeyondConvexCLI {
 
@@ -27,8 +27,13 @@ namespace BeyondConvexCLI {
             void set(double value) { m_native->y = value; }
         }
 
-        double Magnitude() const { return m_native->Magnitude(); }
-        double MagnitudeSquared() const { return m_native->MagnitudeSquared(); }
+        property double Magnitude {
+            double get() { return m_native->Length(); }
+        }
+
+        property double MagnitudeSquared {
+            double get() { return m_native->LengthSquared(); }
+        }
 
         double Dot(ManagedVector2D^ other) {
             return m_native->Dot(*other->m_native);
@@ -42,6 +47,30 @@ namespace BeyondConvexCLI {
 
         ManagedVector2D^ Normalized() {
             return gcnew ManagedVector2D(m_native->Normalized());
+        }
+
+        ManagedVector2D^ Add(ManagedVector2D^ other) {
+            return gcnew ManagedVector2D(*m_native + *other->m_native);
+        }
+
+        ManagedVector2D^ Subtract(ManagedVector2D^ other) {
+            return gcnew ManagedVector2D(*m_native - *other->m_native);
+        }
+
+        ManagedVector2D^ Multiply(double scalar) {
+            return gcnew ManagedVector2D(*m_native * scalar);
+        }
+
+        ManagedVector2D^ Divide(double scalar) {
+            return gcnew ManagedVector2D(*m_native / scalar);
+        }
+
+        ManagedVector2D^ Negate() {
+            return gcnew ManagedVector2D(-*m_native);
+        }
+
+        String^ ToString() override {
+            return String::Format("({0:F6}, {1:F6})", m_native->x, m_native->y);
         }
 
         geometry::Vector2D* GetNative() { return m_native; }
